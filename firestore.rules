@@ -1,0 +1,199 @@
+rules_version = '2';
+service cloud.firestore {
+  match /databases/{database}/documents {
+    // Helper functions
+    function isAuthenticated() {
+      return request.auth != null;
+    }
+    
+    function getUserData() {
+      return get(/databases/$(database)/documents/users/$(request.auth.uid)).data;
+    }
+    
+    function hasRole(role) {
+      return isAuthenticated() && getUserData().role == role;
+    }
+    
+    function hasAnyRole(roles) {
+      return isAuthenticated() && getUserData().role in roles;
+    }
+    
+    function isApproved() {
+      return isAuthenticated() && getUserData().status in ['approved', 'active'];
+    }
+    
+    function isVerified() {
+      return isAuthenticated() && getUserData().isVerified == true;
+    }
+    
+    function isOwner(resourceUserId) {
+      return isAuthenticated() && request.auth.uid == resourceUserId;
+    }
+
+    // Users collection - user profiles
+    match /users/{userId} {
+      // Users can read their own profile
+      allow read: if isOwner(userId);
+      
+      // Users can create their own profile during signup
+      allow create: if isOwner(userId) && 
+        request.resource.data.uid == userId &&
+        request.resource.data.email == request.auth.token.email;
+      
+      // Users can update their own profile (except role and status)
+      allow update: if isOwner(userId) && 
+        !('role' in request.resource.data.diff(resource.data)) &&
+        !('status' in request.resource.data.diff(resource.data));
+      
+      // Admins can read, update, and delete any user
+      allow read, update, delete: if hasRole('admin');
+      
+      // Staff can read and update user status/verification
+      allow read: if hasRole('staff');
+      allow update: if hasRole('staff') && 
+        request.resource.data.diff(resource.data).affectedKeys()
+          .hasOnly(['status', 'isVerified', 'verificationDate', 'updatedAt']);
+    }
+
+    // Properties collection
+    match /properties/{propertyId} {
+      // Anyone can read verified and available properties
+      allow read: if resource.data.isVerified == true && 
+        resource.data.availability == 'available';
+      
+      // Home owners can read their own properties
+      allow read: if isAuthenticated() && 
+        hasRole('home_owner') && 
+        isOwner(resource.data.homeOwnerId);
+      
+      // Approved home owners can create properties
+      allow create: if hasRole('home_owner') && 
+        isApproved() && 
+        request.resource.data.homeOwnerId == request.auth.uid;
+      
+      // Property owners can update their own properties
+      allow update: if hasRole('home_owner') && 
+        isOwner(resource.data.homeOwnerId) && 
+        isApproved();
+      
+      // Property owners can delete their own properties
+      allow delete: if hasRole('home_owner') && 
+        isOwner(resource.data.homeOwnerId);
+      
+      // Admins and staff can read all properties
+      allow read: if hasAnyRole(['admin', 'staff']);
+      
+      // Staff can update property verification status
+      allow update: if hasRole('staff') && 
+        request.resource.data.diff(resource.data).affectedKeys()
+          .hasOnly(['isVerified', 'verificationStatus', 'verificationDate', 'verifiedBy', 'updatedAt']);
+      
+      // Admins can do everything with properties
+      allow write: if hasRole('admin');
+    }
+
+    // Reviews collection
+    match /reviews/{reviewId} {
+      // Anyone can read reviews
+      allow read: if true;
+      
+      // Authenticated users can create reviews
+      allow create: if isAuthenticated() && 
+        request.resource.data.reviewerId == request.auth.uid;
+      
+      // Users can update their own reviews
+      allow update: if isAuthenticated() && 
+        isOwner(resource.data.reviewerId);
+      
+      // Users can delete their own reviews
+      allow delete: if isAuthenticated() && 
+        isOwner(resource.data.reviewerId);
+      
+      // Admins can moderate reviews
+      allow write: if hasRole('admin');
+    }
+
+    // Applications collection - for pending user applications
+    match /applications/{applicationId} {
+      // Users can read their own applications
+      allow read: if isAuthenticated() && 
+        isOwner(resource.data.applicantId);
+      
+      // Users can create applications for themselves
+      allow create: if isAuthenticated() && 
+        request.resource.data.applicantId == request.auth.uid;
+      
+      // Users can update their own pending applications
+      allow update: if isAuthenticated() && 
+        isOwner(resource.data.applicantId) && 
+        resource.data.status == 'pending';
+      
+      // Admins and staff can read and update applications
+      allow read, update: if hasAnyRole(['admin', 'staff']);
+    }
+
+    // Artisans collection
+    match /artisans/{artisanId} {
+      // Anyone can read verified artisans
+      allow read: if resource.data.isVerified == true;
+      
+      // Artisans can read their own profile
+      allow read: if isAuthenticated() && 
+        hasRole('artisan') && 
+        isOwner(artisanId);
+      
+      // Approved artisans can create/update their profile
+      allow create, update: if hasRole('artisan') && 
+        isApproved() && 
+        isOwner(artisanId);
+      
+      // Admins can do everything with artisans
+      allow write: if hasRole('admin');
+      
+      // Staff can verify artisans
+      allow update: if hasRole('staff') && 
+        request.resource.data.diff(resource.data).affectedKeys()
+          .hasOnly(['isVerified', 'verificationDate', 'updatedAt']);
+    }
+
+    // Tenant reports collection
+    match /tenant_reports/{reportId} {
+      // Estate managers can read reports for their properties
+      allow read: if hasRole('estate_manager');
+      
+      // Home owners can read reports for their properties
+      allow read: if hasRole('home_owner') && 
+        isOwner(resource.data.reporterId);
+      
+      // Estate managers and home owners can create reports
+      allow create: if hasAnyRole(['estate_manager', 'home_owner']) && 
+        request.resource.data.reporterId == request.auth.uid;
+      
+      // Report creators can update their own reports
+      allow update: if isAuthenticated() && 
+        isOwner(resource.data.reporterId);
+      
+      // Admins can manage all reports
+      allow write: if hasRole('admin');
+    }
+
+    // Messages/notifications collection
+    match /messages/{messageId} {
+      // Users can read messages sent to them
+      allow read: if isAuthenticated() && 
+        (isOwner(resource.data.recipientId) || isOwner(resource.data.senderId));
+      
+      // Users can create messages
+      allow create: if isAuthenticated() && 
+        request.resource.data.senderId == request.auth.uid;
+      
+      // Admins can manage all messages
+      allow write: if hasRole('admin');
+    }
+
+    // Default deny all other operations
+    match /{document=**} {
+      allow read, write: if false;
+    }
+  }
+} 
