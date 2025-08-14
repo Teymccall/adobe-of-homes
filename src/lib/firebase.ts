@@ -11,7 +11,8 @@ const firebaseConfig = {
   authDomain: "adobe-of-homes.firebaseapp.com",
   databaseURL: "https://adobe-of-homes-default-rtdb.firebaseio.com",
   projectId: "adobe-of-homes",
-  storageBucket: "adobe-of-homes.firebasestorage.app",
+  // Firebase Storage bucket should use the appspot.com domain
+  storageBucket: "adobe-of-homes.appspot.com",
   messagingSenderId: "787532865176",
   appId: "1:787532865176:web:03fb16c1b84894a59efaed"
 };
