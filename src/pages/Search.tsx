@@ -23,24 +23,44 @@ const Search = () => {
   const [properties, setProperties] = useState<any[]>([]);
   const [homeOwners, setHomeOwners] = useState<any[]>([]);
   const [isLoading, setIsLoading] = useState(true);
+  const [error, setError] = useState<string | null>(null);
 
   useEffect(() => {
     const fetchData = async () => {
       try {
         setIsLoading(true);
+        setError(null);
+        
+        console.log('🔍 Starting to fetch data...');
+        
         // Fetch properties and home owners in parallel
         const [propertiesData, homeOwnersData] = await Promise.all([
           propertyService.getAllProperties(),
           authService.getVerifiedHomeOwners()
         ]);
         
-        console.log('Fetched properties:', propertiesData);
-        console.log('Fetched home owners:', homeOwnersData);
+        console.log('✅ Fetched properties:', propertiesData);
+        console.log('✅ Fetched home owners:', homeOwnersData);
+        console.log('📊 Properties count:', propertiesData?.length || 0);
+        console.log('📊 Home owners count:', homeOwnersData?.length || 0);
         
-        setProperties(propertiesData);
-        setHomeOwners(homeOwnersData);
+        // Check if properties have the expected structure
+        if (propertiesData && propertiesData.length > 0) {
+          console.log('🏠 First property sample:', propertiesData[0]);
+          console.log('🏠 Property keys:', Object.keys(propertiesData[0]));
+        }
+        
+        setProperties(propertiesData || []);
+        setHomeOwners(homeOwnersData || []);
+        
+        if (!propertiesData || propertiesData.length === 0) {
+          console.warn('⚠️ No properties found in database');
+          setError('No properties available at the moment. Please check back later.');
+        }
+        
       } catch (error) {
-        console.error('Error fetching data:', error);
+        console.error('❌ Error fetching data:', error);
+        setError(`Failed to load properties: ${error instanceof Error ? error.message : 'Unknown error'}`);
       } finally {
         setIsLoading(false);
       }
@@ -117,16 +137,41 @@ const Search = () => {
   });
 
   // Debug logging
-  console.log('All properties:', properties);
-  console.log('Filters:', filters);
-  console.log('Filtered properties:', filteredProperties);
+  console.log('🔍 Search Debug Info:');
+  console.log('📊 All properties:', properties);
+  console.log('🔧 Filters:', filters);
+  console.log('✅ Filtered properties:', filteredProperties);
+  console.log('🔢 Properties count:', properties.length);
+  console.log('🔢 Filtered count:', filteredProperties.length);
 
   if (isLoading) {
     return (
       <Layout>
         <div className="container mx-auto px-4 py-8">
           <div className="flex items-center justify-center min-h-[400px]">
-            <div className="animate-spin rounded-full h-32 w-32 border-b-2 border-primary"></div>
+            <div className="text-center">
+              <div className="animate-spin rounded-full h-32 w-32 border-b-2 border-primary mx-auto mb-4"></div>
+              <p className="text-lg text-muted-foreground">Loading properties...</p>
+            </div>
+          </div>
+        </div>
+      </Layout>
+    );
+  }
+
+  if (error) {
+    return (
+      <Layout>
+        <div className="container mx-auto px-4 py-8">
+          <div className="bg-red-50 border border-red-200 rounded-lg p-8 text-center">
+            <h2 className="text-xl font-medium text-red-800 mb-2">Error Loading Properties</h2>
+            <p className="text-red-600 mb-4">{error}</p>
+            <button
+              onClick={() => window.location.reload()}
+              className="bg-red-600 text-white px-4 py-2 rounded-lg hover:bg-red-700 transition-colors"
+            >
+              Try Again
+            </button>
           </div>
         </div>
       </Layout>
@@ -138,6 +183,17 @@ const Search = () => {
       <div className="container mx-auto px-4 py-8">
         <h1 className="text-2xl md:text-3xl font-bold mb-2">Find Your Perfect Property</h1>
         <p className="text-muted-foreground mb-6">Browse properties for sale and rent in Ghana</p>
+        
+        {/* Debug Info Banner - Remove this after fixing */}
+        <div className="bg-blue-50 border border-blue-200 rounded-lg p-4 mb-6">
+          <h3 className="text-sm font-medium text-blue-800 mb-2">Debug Information</h3>
+          <div className="text-sm text-blue-700 space-y-1">
+            <p><strong>Total Properties:</strong> {properties.length}</p>
+            <p><strong>Filtered Properties:</strong> {filteredProperties.length}</p>
+            <p><strong>Home Owners:</strong> {homeOwners.length}</p>
+            <p><strong>Current Filters:</strong> {JSON.stringify(filters)}</p>
+          </div>
+        </div>
         
         {/* Search bar */}
         <div className="mb-6">
@@ -225,20 +281,36 @@ const Search = () => {
           ) : (
             <div className="bg-white rounded-lg shadow p-8 text-center">
               <h2 className="text-xl font-medium mb-2">No properties found</h2>
-              <p className="text-muted-foreground mb-4">Try adjusting your search filters</p>
-              <button
-                onClick={() => setFilters({
-                  location: '',
-                  propertyType: 'all',
-                  priceRange: 'all',
-                  bedrooms: 'all',
-                  stayDuration: 'all',
-                  showMap: false,
-                })}
-                className="text-ghana-primary hover:underline"
-              >
-                Clear all filters
-              </button>
+              <p className="text-muted-foreground mb-4">
+                {properties.length === 0 
+                  ? "No properties are currently available in the database." 
+                  : "Try adjusting your search filters"
+                }
+              </p>
+              {properties.length === 0 ? (
+                <div className="text-sm text-gray-500">
+                  <p>This could mean:</p>
+                  <ul className="list-disc list-inside mt-2 space-y-1">
+                    <li>No properties have been added yet</li>
+                    <li>There's an issue with the database connection</li>
+                    <li>Properties exist but aren't being fetched correctly</li>
+                  </ul>
+                </div>
+              ) : (
+                <button
+                  onClick={() => setFilters({
+                    location: '',
+                    propertyType: 'all',
+                    priceRange: 'all',
+                    bedrooms: 'all',
+                    stayDuration: 'all',
+                    showMap: false,
+                  })}
+                  className="text-ghana-primary hover:underline"
+                >
+                  Clear all filters
+                </button>
+              )}
             </div>
           )}
         </div>
