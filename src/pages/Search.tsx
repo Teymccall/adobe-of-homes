@@ -34,6 +34,9 @@ const Search = () => {
           authService.getVerifiedHomeOwners()
         ]);
         
+        console.log('Fetched properties:', propertiesData);
+        console.log('Fetched home owners:', homeOwnersData);
+        
         setProperties(propertiesData);
         setHomeOwners(homeOwnersData);
       } catch (error) {
@@ -112,6 +115,11 @@ const Search = () => {
     
     return true;
   });
+
+  // Debug logging
+  console.log('All properties:', properties);
+  console.log('Filters:', filters);
+  console.log('Filtered properties:', filteredProperties);
 
   if (isLoading) {
     return (
