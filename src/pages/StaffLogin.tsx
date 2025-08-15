@@ -44,8 +44,23 @@ const StaffLogin = () => {
       const result = await signIn(email, password);
       
       if (result.profile) {
-        // Check if user is a staff member
-        if (['admin', 'staff', 'moderator'].includes(result.profile.role)) {
+        // Debug: Log the user's role and status
+        console.log('User profile:', result.profile);
+        console.log('User role:', result.profile.role);
+        console.log('User status:', result.profile.status);
+        console.log('Expected roles:', ['admin', 'staff', 'estate_manager']);
+        console.log('Role check result:', ['admin', 'staff', 'estate_manager'].includes(result.profile.role));
+        
+        // Check if user is a staff member (using correct role values from UserRole type)
+        // Also handle potential variations in role naming
+        const userRole = result.profile.role?.toLowerCase().replace(/[-_]/g, '');
+        const allowedRoles = ['admin', 'staff', 'estatemanager'];
+        
+        console.log('Normalized user role:', userRole);
+        console.log('Normalized allowed roles:', allowedRoles);
+        console.log('Final role check result:', allowedRoles.includes(userRole));
+        
+        if (['admin', 'staff', 'estate_manager'].includes(result.profile.role) || allowedRoles.includes(userRole)) {
           // Check if staff is active
           if (result.profile.status === 'suspended') {
             toast({
