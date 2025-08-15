@@ -147,15 +147,15 @@ const StaffDashboard = () => {
                 <div className="w-12 h-12 bg-gradient-to-br from-blue-500 to-indigo-600 rounded-xl flex items-center justify-center shadow-lg">
                   <UserCog className="text-white" size={24} />
                 </div>
-                <div>
+          <div>
                   <h1 className="text-2xl md:text-3xl font-bold bg-gradient-to-r from-slate-900 to-slate-700 bg-clip-text text-transparent">
-                    Staff Dashboard
-                  </h1>
+              Staff Dashboard
+            </h1>
                   <p className="text-slate-600 text-sm font-medium">
                     Welcome back, <span className="text-blue-600 font-semibold">{currentUser.displayName}</span>
                   </p>
                 </div>
-              </div>
+          </div>
               
               <div className="flex items-center space-x-3">
                 <Button variant="ghost" size="sm" className="relative">
@@ -171,8 +171,8 @@ const StaffDashboard = () => {
                   className="border-red-200 text-red-600 hover:bg-red-50 hover:border-red-300 transition-all duration-200"
                 >
                   <LogOut size={16} className="mr-2" />
-                  Logout
-                </Button>
+            Logout
+          </Button>
               </div>
             </div>
           </div>
@@ -305,9 +305,9 @@ const StaffDashboard = () => {
           </Card>
 
           {/* Main Content Tabs */}
-          <Tabs value={activeTab} onValueChange={setActiveTab} className="w-full">
+        <Tabs value={activeTab} onValueChange={setActiveTab} className="w-full">
             <div className="bg-white/70 backdrop-blur-sm rounded-2xl shadow-lg border border-white/50 mb-6">
-              <StaffTabNavigation canAccess={canAccess} />
+          <StaffTabNavigation canAccess={canAccess} />
             </div>
 
             <div className="space-y-6">
@@ -320,10 +320,10 @@ const StaffDashboard = () => {
                     </CardTitle>
                   </CardHeader>
                   <CardContent>
-                    <StaffOverview canAccess={canAccess} />
+            <StaffOverview canAccess={canAccess} />
                   </CardContent>
                 </Card>
-              </TabsContent>
+          </TabsContent>
 
               <TabsContent value="property_management" className="mt-0">
                 <Card className="bg-white/70 backdrop-blur-sm border-0 shadow-lg">
@@ -334,10 +334,10 @@ const StaffDashboard = () => {
                     </CardTitle>
                   </CardHeader>
                   <CardContent>
-                    <StaffPropertyManagement />
+            <StaffPropertyManagement />
                   </CardContent>
                 </Card>
-              </TabsContent>
+          </TabsContent>
 
               <TabsContent value="rental_applications" className="mt-0">
                 <Card className="bg-white/70 backdrop-blur-sm border-0 shadow-lg">
@@ -348,10 +348,10 @@ const StaffDashboard = () => {
                     </CardTitle>
                   </CardHeader>
                   <CardContent>
-                    <StaffRentalApplications />
+            <StaffRentalApplications />
                   </CardContent>
                 </Card>
-              </TabsContent>
+          </TabsContent>
 
               <TabsContent value="maintenance_requests" className="mt-0">
                 <Card className="bg-white/70 backdrop-blur-sm border-0 shadow-lg">
@@ -362,10 +362,10 @@ const StaffDashboard = () => {
                     </CardTitle>
                   </CardHeader>
                   <CardContent>
-                    <StaffMaintenanceRequests />
+            <StaffMaintenanceRequests />
                   </CardContent>
                 </Card>
-              </TabsContent>
+          </TabsContent>
 
               <TabsContent value="payments" className="mt-0">
                 <Card className="bg-white/70 backdrop-blur-sm border-0 shadow-lg">
@@ -376,10 +376,10 @@ const StaffDashboard = () => {
                     </CardTitle>
                   </CardHeader>
                   <CardContent>
-                    <StaffPayments />
+            <StaffPayments />
                   </CardContent>
                 </Card>
-              </TabsContent>
+          </TabsContent>
 
               <TabsContent value="calendar" className="mt-0">
                 <Card className="bg-white/70 backdrop-blur-sm border-0 shadow-lg">
@@ -390,10 +390,10 @@ const StaffDashboard = () => {
                     </CardTitle>
                   </CardHeader>
                   <CardContent>
-                    <StaffCalendar />
+            <StaffCalendar />
                   </CardContent>
                 </Card>
-              </TabsContent>
+          </TabsContent>
 
               <TabsContent value="support" className="mt-0">
                 <Card className="bg-white/70 backdrop-blur-sm border-0 shadow-lg">
@@ -404,12 +404,12 @@ const StaffDashboard = () => {
                     </CardTitle>
                   </CardHeader>
                   <CardContent>
-                    <StaffSupport />
+            <StaffSupport />
                   </CardContent>
                 </Card>
-              </TabsContent>
+          </TabsContent>
 
-              {canAccess('property_verification') && (
+          {canAccess('property_verification') && (
                 <TabsContent value="property_verification" className="mt-0">
                   <Card className="bg-white/70 backdrop-blur-sm border-0 shadow-lg">
                     <CardHeader>
@@ -419,13 +419,13 @@ const StaffDashboard = () => {
                       </CardTitle>
                     </CardHeader>
                     <CardContent>
-                      <PropertyVerificationManagement />
+              <PropertyVerificationManagement />
                     </CardContent>
                   </Card>
-                </TabsContent>
-              )}
+            </TabsContent>
+          )}
 
-              {canAccess('user_management') && (
+          {canAccess('user_management') && (
                 <TabsContent value="home_owners" className="mt-0">
                   <Card className="bg-white/70 backdrop-blur-sm border-0 shadow-lg">
                     <CardHeader>
@@ -435,11 +435,11 @@ const StaffDashboard = () => {
                       </CardTitle>
                     </CardHeader>
                     <CardContent>
-                      <HomeOwnerManagement />
+              <HomeOwnerManagement />
                     </CardContent>
                   </Card>
-                </TabsContent>
-              )}
+            </TabsContent>
+          )}
 
               <TabsContent value="tenant_search" className="mt-0">
                 <Card className="bg-white/70 backdrop-blur-sm border-0 shadow-lg">
@@ -450,12 +450,12 @@ const StaffDashboard = () => {
                     </CardTitle>
                   </CardHeader>
                   <CardContent>
-                    <TenantSearch userType="staff" />
+            <TenantSearch userType="staff" />
                   </CardContent>
                 </Card>
-              </TabsContent>
+          </TabsContent>
 
-              {canAccess('reports') && (
+          {canAccess('reports') && (
                 <TabsContent value="reports" className="mt-0">
                   <Card className="bg-white/70 backdrop-blur-sm border-0 shadow-lg">
                     <CardHeader>
@@ -465,13 +465,13 @@ const StaffDashboard = () => {
                       </CardTitle>
                     </CardHeader>
                     <CardContent>
-                      <StaffReports />
+              <StaffReports />
                     </CardContent>
                   </Card>
-                </TabsContent>
-              )}
+            </TabsContent>
+          )}
 
-              {canAccess('user_management') && (
+          {canAccess('user_management') && (
                 <TabsContent value="user_management" className="mt-0">
                   <Card className="bg-white/70 backdrop-blur-sm border-0 shadow-lg">
                     <CardHeader>
@@ -481,13 +481,13 @@ const StaffDashboard = () => {
                       </CardTitle>
                     </CardHeader>
                     <CardContent>
-                      <StaffUserManagement />
+              <StaffUserManagement />
                     </CardContent>
                   </Card>
-                </TabsContent>
-              )}
+            </TabsContent>
+          )}
             </div>
-          </Tabs>
+        </Tabs>
         </div>
       </div>
     </Layout>

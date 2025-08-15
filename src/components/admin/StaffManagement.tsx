@@ -1,6 +1,6 @@
 
 import React, { useState, useEffect } from 'react';
-import { Plus, Search, Edit, Trash2, Eye, UserPlus, Mail, Phone, MapPin, Shield, CheckCircle, X, Filter, Download, Upload, Users, Key } from 'lucide-react';
+import { Plus, Search, Edit, Trash2, Eye, UserPlus, Mail, Phone, MapPin, Shield, CheckCircle, X, Filter, Download, Upload, Users, Key, User } from 'lucide-react';
 import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
 import { Badge } from '@/components/ui/badge';
