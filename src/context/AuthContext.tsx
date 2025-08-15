@@ -178,6 +178,18 @@ export const ProtectedRoute: React.FC<ProtectedRouteProps> = ({
 }) => {
   const { user, userProfile, loading, hasRole, isVerified, isApproved } = useAuth();
 
+  // Debug logging for ProtectedRoute
+  console.log('🔒 ProtectedRoute Debug:');
+  console.log('Route:', window.location.pathname);
+  console.log('Loading:', loading);
+  console.log('User:', user?.uid);
+  console.log('UserProfile:', userProfile);
+  console.log('Allowed Roles:', allowedRoles);
+  console.log('User Role:', userProfile?.role);
+  console.log('Has Required Role:', allowedRoles ? hasRole(allowedRoles) : 'No role requirement');
+  console.log('Is Verified:', isVerified);
+  console.log('Is Approved:', isApproved);
+
   if (loading) {
     return (
       <div className="flex items-center justify-center min-h-screen">
@@ -187,6 +199,7 @@ export const ProtectedRoute: React.FC<ProtectedRouteProps> = ({
   }
 
   if (!user) {
+    console.log('❌ No user - redirecting to login');
     if (redirectTo) {
       window.location.href = redirectTo;
       return null;
@@ -195,6 +208,10 @@ export const ProtectedRoute: React.FC<ProtectedRouteProps> = ({
   }
 
   if (allowedRoles && !hasRole(allowedRoles)) {
+    console.log('❌ User does not have required role');
+    console.log('Required roles:', allowedRoles);
+    console.log('User role:', userProfile?.role);
+    console.log('Has role result:', hasRole(allowedRoles));
     return fallback || <div>You don't have permission to access this page.</div>;
   }
 
