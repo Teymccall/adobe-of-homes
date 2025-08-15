@@ -48,19 +48,17 @@ const StaffLogin = () => {
         console.log('User profile:', result.profile);
         console.log('User role:', result.profile.role);
         console.log('User status:', result.profile.status);
-        console.log('Expected roles:', ['admin', 'staff', 'estate_manager']);
-        console.log('Role check result:', ['admin', 'staff', 'estate_manager'].includes(result.profile.role));
         
-        // Check if user is a staff member (using correct role values from UserRole type)
-        // Also handle potential variations in role naming
-        const userRole = result.profile.role?.toLowerCase().replace(/[-_]/g, '');
-        const allowedRoles = ['admin', 'staff', 'estatemanager'];
+        // Simplified role checking - check for exact matches first
+        const userRole = result.profile.role;
+        const allowedRoles = ['admin', 'staff', 'estate_manager'];
         
-        console.log('Normalized user role:', userRole);
-        console.log('Normalized allowed roles:', allowedRoles);
-        console.log('Final role check result:', allowedRoles.includes(userRole));
+        console.log('User role:', userRole);
+        console.log('Allowed roles:', allowedRoles);
+        console.log('Role check result:', allowedRoles.includes(userRole));
         
-        if (['admin', 'staff', 'estate_manager'].includes(result.profile.role) || allowedRoles.includes(userRole)) {
+        // Check if user has staff privileges
+        if (allowedRoles.includes(userRole)) {
           // Check if staff is active
           if (result.profile.status === 'suspended') {
             toast({
@@ -71,9 +69,19 @@ const StaffLogin = () => {
             return;
           }
           
+          // Check if status is active
+          if (result.profile.status !== 'active') {
+            toast({
+              title: "Access Denied",
+              description: "Your account is not active. Please contact the administrator.",
+              variant: "destructive"
+            });
+            return;
+          }
+          
           toast({
             title: "Login Successful",
-            description: `Welcome to Staff Dashboard, ${result.profile.displayName}!`,
+            description: `Welcome to Staff Dashboard, ${result.profile.displayName || result.profile.email}!`,
           });
           
           // Redirect based on role
@@ -83,12 +91,53 @@ const StaffLogin = () => {
             navigate('/staff-dashboard');
           }
         } else {
+          // Additional check: Query Firestore to verify staff status
+          console.log('Role not found in profile, checking Firestore...');
+          
+          try {
+            const staffQuery = query(
+              collection(db, 'users'),
+              where('email', '==', email.toLowerCase())
+            );
+            const staffSnapshot = await getDocs(staffQuery);
+            
+            if (!staffSnapshot.empty) {
+              const staffDoc = staffSnapshot.docs[0];
+              const staffData = staffDoc.data();
+              
+              console.log('Firestore staff data:', staffData);
+              
+              if (allowedRoles.includes(staffData.role) && staffData.status === 'active') {
+                toast({
+                  title: "Login Successful",
+                  description: `Welcome to Staff Dashboard, ${staffData.displayName || staffData.email}!`,
+                });
+                
+                // Redirect based on role
+                if (staffData.role === 'admin') {
+                  navigate('/admin-dashboard');
+                } else {
+                  navigate('/staff-dashboard');
+                }
+                return;
+              }
+            }
+          } catch (firestoreError) {
+            console.error('Error checking Firestore:', firestoreError);
+          }
+          
           toast({
             title: "Access Denied",
             description: "You don't have staff privileges. Please use the main login page.",
             variant: "destructive"
           });
         }
+      } else {
+        toast({
+          title: "Login Failed",
+          description: "Unable to retrieve user profile. Please try again.",
+          variant: "destructive"
+        });
       }
     } catch (error: any) {
       console.error('Login error:', error);
@@ -106,97 +155,106 @@ const StaffLogin = () => {
 
   return (
     <Layout>
-      <div className="container max-w-4xl mx-auto px-4 py-16">
-        <div className="grid grid-cols-1 lg:grid-cols-2 gap-8">
-          {/* Login Form */}
-          <Card>
-            <CardHeader className="space-y-1">
-              <div className="flex justify-center mb-4">
-                <div className="w-16 h-16 rounded-full bg-primary flex items-center justify-center">
-                  <UserCog className="text-white" size={32} />
+      <div className="min-h-screen bg-gradient-to-br from-green-50 to-blue-50 flex items-center justify-center p-4">
+        <div className="w-full max-w-6xl grid lg:grid-cols-2 gap-8 items-center">
+          {/* Left side - Login Form */}
+          <div className="flex justify-center">
+            <Card className="w-full max-w-md">
+              <CardHeader className="text-center">
+                <div className="mx-auto w-12 h-12 bg-green-600 rounded-full flex items-center justify-center mb-4">
+                  <UserCog className="text-white" size={24} />
                 </div>
-              </div>
-              <CardTitle className="text-2xl text-center">Staff Login</CardTitle>
-              <CardDescription className="text-center">
-                Access the staff dashboard with your authorized credentials
-              </CardDescription>
-            </CardHeader>
-            <form onSubmit={handleLogin}>
-              <CardContent className="space-y-4">
-                <div className="space-y-2">
-                  <label htmlFor="email" className="text-sm font-medium">Email Address</label>
-                  <Input
-                    id="email"
-                    type="email"
-                    placeholder="Enter your email address"
-                    value={email}
-                    onChange={(e) => setEmail(e.target.value)}
-                    required
-                  />
-                </div>
-                <div className="space-y-2">
-                  <label htmlFor="password" className="text-sm font-medium">Password</label>
-                  <Input
-                    id="password"
-                    type="password"
-                    placeholder="Enter your password"
-                    value={password}
-                    onChange={(e) => setPassword(e.target.value)}
-                    required
-                  />
-                </div>
-                <div className="text-sm text-muted-foreground text-center">
-                  Need access? Contact your system administrator to create an account.
-                </div>
-              </CardContent>
-              <CardFooter>
-                <Button type="submit" className="w-full" disabled={isLoading}>
-                  <LogIn className="mr-2" size={16} />
-                  {isLoading ? 'Signing In...' : 'Access Dashboard'}
-                </Button>
-              </CardFooter>
-            </form>
-          </Card>
+                <CardTitle className="text-2xl font-bold">Staff Login</CardTitle>
+                <CardDescription>
+                  Access the staff dashboard with your authorized credentials
+                </CardDescription>
+              </CardHeader>
+              <form onSubmit={handleLogin}>
+                <CardContent className="space-y-4">
+                  <div className="space-y-2">
+                    <label htmlFor="email" className="text-sm font-medium">Email Address</label>
+                    <Input
+                      id="email"
+                      type="email"
+                      placeholder="Enter your email address"
+                      value={email}
+                      onChange={(e) => setEmail(e.target.value)}
+                      required
+                    />
+                  </div>
+                  <div className="space-y-2">
+                    <label htmlFor="password" className="text-sm font-medium">Password</label>
+                    <Input
+                      id="password"
+                      type="password"
+                      placeholder="Enter your password"
+                      value={password}
+                      onChange={(e) => setPassword(e.target.value)}
+                      required
+                    />
+                  </div>
+                  <div className="text-sm text-muted-foreground text-center">
+                    Need access? Contact your system administrator to create an account.
+                  </div>
+                </CardContent>
+                <CardFooter>
+                  <Button type="submit" className="w-full" disabled={isLoading}>
+                    <LogIn className="mr-2" size={16} />
+                    {isLoading ? 'Signing In...' : 'Access Dashboard'}
+                  </Button>
+                </CardFooter>
+              </form>
+            </Card>
+          </div>
 
-          {/* Information Card */}
-          <Card>
-            <CardHeader>
-              <CardTitle className="text-xl">How to Access Staff Dashboard</CardTitle>
-              <CardDescription>
+          {/* Right side - Information */}
+          <div className="space-y-6">
+            <div>
+              <h2 className="text-3xl font-bold text-gray-900 mb-4">
+                How to Access Staff Dashboard
+              </h2>
+              <p className="text-gray-600 text-lg">
                 Staff accounts are created by administrators. Contact your administrator if you need access.
-              </CardDescription>
-            </CardHeader>
-            <CardContent className="space-y-4">
-              <div className="space-y-3">
-                <div className="flex items-start gap-3">
-                  <div className="w-6 h-6 rounded-full bg-primary text-white text-xs flex items-center justify-center mt-0.5">1</div>
-                  <div>
-                    <h4 className="font-medium">Account Creation</h4>
-                    <p className="text-sm text-muted-foreground">Administrators create staff accounts through the admin dashboard</p>
-                  </div>
+              </p>
+            </div>
+            <div className="space-y-4">
+              <div className="flex items-start space-x-3">
+                <div className="flex-shrink-0 w-8 h-8 bg-green-600 text-white rounded-full flex items-center justify-center text-sm font-semibold">
+                  1
                 </div>
-                <div className="flex items-start gap-3">
-                  <div className="w-6 h-6 rounded-full bg-primary text-white text-xs flex items-center justify-center mt-0.5">2</div>
-                  <div>
-                    <h4 className="font-medium">Password Setup</h4>
-                    <p className="text-sm text-muted-foreground">You'll receive a password reset email to set your password</p>
-                  </div>
-                </div>
-                <div className="flex items-start gap-3">
-                  <div className="w-6 h-6 rounded-full bg-primary text-white text-xs flex items-center justify-center mt-0.5">3</div>
-                  <div>
-                    <h4 className="font-medium">Login Access</h4>
-                    <p className="text-sm text-muted-foreground">Use your email and password to access the staff dashboard</p>
-                  </div>
+                <div>
+                  <h3 className="font-semibold text-gray-900">Account Creation</h3>
+                  <p className="text-gray-600">Administrators create staff accounts through the admin dashboard</p>
                 </div>
               </div>
-              <div className="bg-blue-50 p-3 rounded-lg">
-                <p className="text-sm text-blue-800">
-                  <strong>Need access?</strong> Contact your system administrator to create an account for you.
-                </p>
+
+              <div className="flex items-start space-x-3">
+                <div className="flex-shrink-0 w-8 h-8 bg-green-600 text-white rounded-full flex items-center justify-center text-sm font-semibold">
+                  2
+                </div>
+                <div>
+                  <h3 className="font-semibold text-gray-900">Password Setup</h3>
+                  <p className="text-gray-600">You'll receive a password reset email to set your password</p>
+                </div>
               </div>
-            </CardContent>
-          </Card>
+
+              <div className="flex items-start space-x-3">
+                <div className="flex-shrink-0 w-8 h-8 bg-green-600 text-white rounded-full flex items-center justify-center text-sm font-semibold">
+                  3
+                </div>
+                <div>
+                  <h3 className="font-semibold text-gray-900">Login Access</h3>
+                  <p className="text-gray-600">Use your email and password to access the staff dashboard</p>
+                </div>
+              </div>
+            </div>
+
+            <div className="bg-blue-50 border border-blue-200 rounded-lg p-4">
+              <p className="text-blue-800 text-sm">
+                <strong>Need Help?</strong> Contact your system administrator to create an account for you.
+              </p>
+            </div>
+          </div>
         </div>
       </div>
     </Layout>
