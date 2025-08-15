@@ -31,14 +31,18 @@ const Search = () => {
         setIsLoading(true);
         setError(null);
         
-        // Fetch properties and home owners in parallel
-        const [propertiesData, homeOwnersData] = await Promise.all([
-          propertyService.getAllProperties(),
-          authService.getVerifiedHomeOwners()
-        ]);
-        
+        // Fetch properties (public access)
+        const propertiesData = await propertyService.getAllProperties();
         setProperties(propertiesData || []);
-        setHomeOwners(homeOwnersData || []);
+        
+        // Try to fetch home owners if possible (for authenticated users)
+        try {
+          const homeOwnersData = await authService.getVerifiedHomeOwners();
+          setHomeOwners(homeOwnersData || []);
+        } catch (homeOwnerError) {
+          console.warn('⚠️ Could not fetch home owners (may require authentication):', homeOwnerError);
+          setHomeOwners([]); // Set empty array if we can't fetch home owners
+        }
         
         if (!propertiesData || propertiesData.length === 0) {
           console.warn('⚠️ No properties found in database');
@@ -58,7 +62,7 @@ const Search = () => {
 
   // Helper function to get home owner by ID
   const getHomeOwnerById = (homeOwnerId: string) => {
-    return homeOwners.find(owner => owner.uid === homeOwnerId);
+    return homeOwners.find(owner => owner.uid === homeOwnerId) || null;
   };
 
   // Update URL when filters change
