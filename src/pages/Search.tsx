@@ -31,24 +31,11 @@ const Search = () => {
         setIsLoading(true);
         setError(null);
         
-        console.log('🔍 Starting to fetch data...');
-        
         // Fetch properties and home owners in parallel
         const [propertiesData, homeOwnersData] = await Promise.all([
           propertyService.getAllProperties(),
           authService.getVerifiedHomeOwners()
         ]);
-        
-        console.log('✅ Fetched properties:', propertiesData);
-        console.log('✅ Fetched home owners:', homeOwnersData);
-        console.log('📊 Properties count:', propertiesData?.length || 0);
-        console.log('📊 Home owners count:', homeOwnersData?.length || 0);
-        
-        // Check if properties have the expected structure
-        if (propertiesData && propertiesData.length > 0) {
-          console.log('🏠 First property sample:', propertiesData[0]);
-          console.log('🏠 Property keys:', Object.keys(propertiesData[0]));
-        }
         
         setProperties(propertiesData || []);
         setHomeOwners(homeOwnersData || []);
@@ -136,13 +123,7 @@ const Search = () => {
     return true;
   });
 
-  // Debug logging
-  console.log('🔍 Search Debug Info:');
-  console.log('📊 All properties:', properties);
-  console.log('🔧 Filters:', filters);
-  console.log('✅ Filtered properties:', filteredProperties);
-  console.log('🔢 Properties count:', properties.length);
-  console.log('🔢 Filtered count:', filteredProperties.length);
+
 
   if (isLoading) {
     return (
@@ -184,16 +165,7 @@ const Search = () => {
         <h1 className="text-2xl md:text-3xl font-bold mb-2">Find Your Perfect Property</h1>
         <p className="text-muted-foreground mb-6">Browse properties for sale and rent in Ghana</p>
         
-        {/* Debug Info Banner - Remove this after fixing */}
-        <div className="bg-blue-50 border border-blue-200 rounded-lg p-4 mb-6">
-          <h3 className="text-sm font-medium text-blue-800 mb-2">Debug Information</h3>
-          <div className="text-sm text-blue-700 space-y-1">
-            <p><strong>Total Properties:</strong> {properties.length}</p>
-            <p><strong>Filtered Properties:</strong> {filteredProperties.length}</p>
-            <p><strong>Home Owners:</strong> {homeOwners.length}</p>
-            <p><strong>Current Filters:</strong> {JSON.stringify(filters)}</p>
-          </div>
-        </div>
+
         
         {/* Search bar */}
         <div className="mb-6">
