@@ -1,6 +1,6 @@
 
 import React, { useState, useEffect } from 'react';
-import { UserX, FileText, User } from 'lucide-react';
+import { UserX, FileText, User, Mail, Phone, Briefcase, MapPin, Home, Trash2 } from 'lucide-react';
 import { Button } from '@/components/ui/button';
 import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogDescription, DialogFooter } from '@/components/ui/dialog';
 import { Badge } from '@/components/ui/badge';
@@ -161,7 +161,7 @@ const AgentManagement = () => {
       {/* Home Owner Details Dialog */}
       <Dialog open={isDialogOpen} onOpenChange={setIsDialogOpen}>
         {selectedAgent && (
-          <DialogContent className="max-w-2xl">
+          <DialogContent className="max-w-2xl w-[95vw] max-h-[90vh] overflow-y-auto">
             <DialogHeader>
               <DialogTitle>Home Owner Profile</DialogTitle>
               <DialogDescription>
@@ -169,9 +169,10 @@ const AgentManagement = () => {
               </DialogDescription>
             </DialogHeader>
 
-            <div className="flex flex-col md:flex-row gap-6 py-4">
-              <div className="md:w-1/3 flex flex-col items-center">
-                <div className="w-32 h-32 rounded-full overflow-hidden border-2 border-ghana-primary mb-3 bg-gray-200 flex items-center justify-center">
+            <div className="flex flex-col lg:flex-row gap-6 py-4">
+              {/* Profile Summary - Stack on mobile */}
+              <div className="w-full lg:w-1/3 flex flex-col items-center">
+                <div className="w-24 h-24 md:w-32 md:h-32 rounded-full overflow-hidden border-2 border-ghana-primary mb-3 bg-gray-200 flex items-center justify-center">
                   {selectedAgent.profileImage ? (
                     <img 
                       src={selectedAgent.profileImage} 
@@ -179,51 +180,83 @@ const AgentManagement = () => {
                       className="w-full h-full object-cover"
                     />
                   ) : (
-                    <span className="text-gray-600 font-semibold text-4xl">
+                    <span className="text-gray-600 font-semibold text-2xl md:text-4xl">
                       {selectedAgent.displayName?.charAt(0) || 'U'}
                     </span>
                   )}
                 </div>
-                <h3 className="text-lg font-semibold">{selectedAgent.displayName}</h3>
-                <p className="text-gray-500">{selectedAgent.company || "Independent Home Owner"}</p>
-                <div className="flex items-center mt-1">
+                <h3 className="text-lg md:text-xl font-semibold text-center">{selectedAgent.displayName}</h3>
+                <p className="text-gray-500 text-sm md:text-base text-center">{selectedAgent.company || "Independent Home Owner"}</p>
+                <div className="flex items-center mt-2">
                   <span className="text-yellow-500 mr-1">★</span>
-                  <span>{selectedAgent.averageRating?.toFixed(1) || '0.0'}</span>
+                  <span className="text-sm md:text-base">{selectedAgent.averageRating?.toFixed(1) || '0.0'}</span>
                 </div>
               </div>
 
-              <div className="md:w-2/3 space-y-3">
-                <div>
-                  <p className="text-sm text-gray-500">Email</p>
-                  <p className="font-medium">{selectedAgent.email}</p>
+              {/* Detailed Information - Full width on mobile */}
+              <div className="w-full lg:w-2/3 space-y-4">
+                <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+                  <div className="space-y-2">
+                    <p className="text-sm text-gray-500 flex items-center gap-2">
+                      <Mail size={16} className="text-gray-600" />
+                      Email
+                    </p>
+                    <p className="font-medium text-sm md:text-base break-all">{selectedAgent.email}</p>
+                  </div>
+                  
+                  <div className="space-y-2">
+                    <p className="text-sm text-gray-500 flex items-center gap-2">
+                      <Phone size={16} className="text-gray-600" />
+                      Phone
+                    </p>
+                    <p className="font-medium text-sm md:text-base">{selectedAgent.phone || 'Not provided'}</p>
+                  </div>
                 </div>
                 
-                <div>
-                  <p className="text-sm text-gray-500">Phone</p>
-                  <p className="font-medium">{selectedAgent.phone || 'Not provided'}</p>
+                <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+                  <div className="space-y-2">
+                    <p className="text-sm text-gray-500 flex items-center gap-2">
+                      <Briefcase size={16} className="text-gray-600" />
+                      Experience
+                    </p>
+                    <p className="font-medium text-sm md:text-base">{selectedAgent.yearsOfExperience ? `${selectedAgent.yearsOfExperience} years` : 'Not specified'}</p>
+                  </div>
+                  
+                  <div className="space-y-2">
+                    <p className="text-sm text-gray-500 flex items-center gap-2">
+                      <MapPin size={16} className="text-gray-600" />
+                      Location
+                    </p>
+                    <p className="font-medium text-sm md:text-base">{selectedAgent.location || 'Not specified'}</p>
+                  </div>
                 </div>
                 
-                <div>
-                  <p className="text-sm text-gray-500">Experience</p>
-                  <p className="font-medium">{selectedAgent.yearsOfExperience ? `${selectedAgent.yearsOfExperience} years` : 'Not specified'}</p>
+                <div className="space-y-2">
+                  <p className="text-sm text-gray-500 flex items-center gap-2">
+                    <User size={16} className="text-gray-600" />
+                    Bio
+                  </p>
+                  <p className="text-sm md:text-base leading-relaxed">{selectedAgent.bio || 'No bio provided'}</p>
                 </div>
                 
-                <div>
-                  <p className="text-sm text-gray-500">Bio</p>
-                  <p>{selectedAgent.bio || 'No bio provided'}</p>
-                </div>
-                
-                <div>
-                  <p className="text-sm text-gray-500">Properties</p>
-                  <div className="flex gap-2 mt-1">
-                    <Badge variant="secondary">{selectedAgent.properties?.length || 0} Total</Badge>
-                    <Badge variant="outline">{selectedAgent.verifiedProperties?.length || 0} Verified</Badge>
+                <div className="space-y-2">
+                  <p className="text-sm text-gray-500 flex items-center gap-2">
+                    <Home size={16} className="text-gray-600" />
+                    Properties
+                  </p>
+                  <div className="flex flex-wrap gap-2 mt-1">
+                    <Badge variant="secondary" className="text-xs md:text-sm">
+                      {selectedAgent.properties?.length || 0} Total
+                    </Badge>
+                    <Badge variant="outline" className="text-xs md:text-sm">
+                      {selectedAgent.verifiedProperties?.length || 0} Verified
+                    </Badge>
                   </div>
                 </div>
               </div>
             </div>
 
-            <DialogFooter className="flex flex-col sm:flex-row gap-2">
+            <DialogFooter className="flex flex-col sm:flex-row gap-2 mt-6">
               <Button 
                 variant="outline" 
                 onClick={() => setIsDialogOpen(false)}
@@ -241,6 +274,7 @@ const AgentManagement = () => {
                 }}
                 className="w-full sm:w-auto"
               >
+                <Trash2 size={16} className="mr-2" />
                 Remove Home Owner
               </Button>
             </DialogFooter>

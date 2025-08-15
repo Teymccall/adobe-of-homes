@@ -19,30 +19,32 @@ interface StaffTableProps {
 
 const StaffTable = ({ staffs, onToggleStatus, onUpdatePriorities, onRemoveStaff }: StaffTableProps) => {
   return (
-    <Table>
-      <TableHeader>
-        <TableRow>
-          <TableHead>Staff Member</TableHead>
-          <TableHead>Contact</TableHead>
-          <TableHead>Role</TableHead>
-          <TableHead>Access Priorities</TableHead>
-          <TableHead>Status</TableHead>
-          <TableHead>Created</TableHead>
-          <TableHead>Actions</TableHead>
-        </TableRow>
-      </TableHeader>
-      <TableBody>
-        {staffs.map((staff) => (
-          <StaffRow
-            key={staff.id}
-            staff={staff}
-            onToggleStatus={onToggleStatus}
-            onUpdatePriorities={onUpdatePriorities}
-            onRemoveStaff={onRemoveStaff}
-          />
-        ))}
-      </TableBody>
-    </Table>
+    <div className="w-full overflow-x-auto">
+      <Table className="min-w-full">
+        <TableHeader>
+          <TableRow>
+            <TableHead className="text-xs md:text-sm font-medium">Staff Member</TableHead>
+            <TableHead className="text-xs md:text-sm font-medium">Contact</TableHead>
+            <TableHead className="text-xs md:text-sm font-medium">Role</TableHead>
+            <TableHead className="text-xs md:text-sm font-medium">Access Priorities</TableHead>
+            <TableHead className="text-xs md:text-sm font-medium">Status</TableHead>
+            <TableHead className="text-xs md:text-sm font-medium hidden md:table-cell">Created</TableHead>
+            <TableHead className="text-xs md:text-sm font-medium">Actions</TableHead>
+          </TableRow>
+        </TableHeader>
+        <TableBody>
+          {staffs.map((staff) => (
+            <StaffRow
+              key={staff.id}
+              staff={staff}
+              onToggleStatus={onToggleStatus}
+              onUpdatePriorities={onUpdatePriorities}
+              onRemoveStaff={onRemoveStaff}
+            />
+          ))}
+        </TableBody>
+      </Table>
+    </div>
   );
 };
 

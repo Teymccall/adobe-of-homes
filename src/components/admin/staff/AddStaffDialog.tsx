@@ -1,6 +1,6 @@
 
 import React, { useState } from 'react';
-import { Plus } from 'lucide-react';
+import { Plus, User, Mail, Phone, MapPin, Briefcase, Shield, CheckCircle } from 'lucide-react';
 import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
 import { Checkbox } from '@/components/ui/checkbox';
@@ -28,11 +28,11 @@ interface AddStaffDialogProps {
 }
 
 const AVAILABLE_PRIORITIES = [
-  { id: 'property_verification', label: 'Property Verification' },
-  { id: 'estate_management', label: 'Estate Management' },
-  { id: 'reports', label: 'Reports & Analytics' },
-  { id: 'user_management', label: 'User Management' },
-  { id: 'system_settings', label: 'System Settings' },
+  { id: 'property_verification', label: 'Property Verification', icon: Shield },
+  { id: 'estate_management', label: 'Estate Management', icon: Briefcase },
+  { id: 'reports', label: 'Reports & Analytics', icon: CheckCircle },
+  { id: 'user_management', label: 'User Management', icon: User },
+  { id: 'system_settings', label: 'System Settings', icon: Shield },
 ];
 
 const STAFF_ROLES = [
@@ -150,57 +150,79 @@ const AddStaffDialog = ({ onAddStaff }: AddStaffDialogProps) => {
           Add Staff
         </Button>
       </DialogTrigger>
-      <DialogContent className="max-w-2xl">
+      <DialogContent className="max-w-2xl w-[95vw] max-h-[90vh] overflow-y-auto">
         <DialogHeader>
           <DialogTitle>Add New Staff Member</DialogTitle>
           <DialogDescription>
-            Register a new staff member and assign their access priorities.
+            Create a new staff account. They will receive a password reset email to set their password.
           </DialogDescription>
         </DialogHeader>
-        <div className="space-y-4 max-h-96 overflow-y-auto">
-          <div className="grid grid-cols-2 gap-4">
-            <div>
-              <label className="text-sm font-medium">Full Name *</label>
+        <div className="space-y-6 max-h-[70vh] overflow-y-auto">
+          {/* Full Name and Email - Stack on mobile */}
+          <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+            <div className="space-y-2">
+              <label className="text-sm font-medium flex items-center gap-2">
+                <User size={16} className="text-gray-600" />
+                Full Name *
+              </label>
               <Input
                 value={newStaff.name}
                 onChange={(e) => setNewStaff({ ...newStaff, name: e.target.value })}
                 placeholder="Enter full name"
+                className="w-full"
               />
             </div>
-            <div>
-              <label className="text-sm font-medium">Email Address *</label>
+            <div className="space-y-2">
+              <label className="text-sm font-medium flex items-center gap-2">
+                <Mail size={16} className="text-gray-600" />
+                Email Address *
+              </label>
               <Input
                 type="email"
                 value={newStaff.email}
                 onChange={(e) => setNewStaff({ ...newStaff, email: e.target.value })}
-                placeholder="Enter email address"
+                placeholder="staff@company.com"
+                className="w-full"
               />
             </div>
           </div>
           
-          <div className="grid grid-cols-2 gap-4">
-            <div>
-              <label className="text-sm font-medium">Phone Number</label>
+          {/* Phone and Location - Stack on mobile */}
+          <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+            <div className="space-y-2">
+              <label className="text-sm font-medium flex items-center gap-2">
+                <Phone size={16} className="text-gray-600" />
+                Phone Number
+              </label>
               <Input
                 value={newStaff.phone}
                 onChange={(e) => setNewStaff({ ...newStaff, phone: e.target.value })}
-                placeholder="Enter phone number"
+                placeholder="+233 XX XXX XXXX"
+                className="w-full"
               />
             </div>
-            <div>
-              <label className="text-sm font-medium">Location</label>
+            <div className="space-y-2">
+              <label className="text-sm font-medium flex items-center gap-2">
+                <MapPin size={16} className="text-gray-600" />
+                Location
+              </label>
               <Input
                 value={newStaff.location}
                 onChange={(e) => setNewStaff({ ...newStaff, location: e.target.value })}
-                placeholder="Enter location"
+                placeholder="City, Region"
+                className="w-full"
               />
             </div>
           </div>
           
-          <div>
-            <label className="text-sm font-medium">Role *</label>
+          {/* Role - Full width */}
+          <div className="space-y-2">
+            <label className="text-sm font-medium flex items-center gap-2">
+              <Briefcase size={16} className="text-gray-600" />
+              Role *
+            </label>
             <Select value={newStaff.role} onValueChange={(value) => setNewStaff({ ...newStaff, role: value })}>
-              <SelectTrigger>
+              <SelectTrigger className="w-full">
                 <SelectValue placeholder="Select role" />
               </SelectTrigger>
               <SelectContent>
@@ -213,30 +235,39 @@ const AddStaffDialog = ({ onAddStaff }: AddStaffDialogProps) => {
             </Select>
           </div>
           
-          <div>
-            <label className="text-sm font-medium mb-3 block">Access Priorities *</label>
-            <div className="grid grid-cols-2 gap-3">
-              {AVAILABLE_PRIORITIES.map((priority) => (
-                <div key={priority.id} className="flex items-center space-x-2">
-                  <Checkbox
-                    id={priority.id}
-                    checked={newStaff.priorities.includes(priority.id)}
-                    onCheckedChange={(checked) => handlePriorityChange(priority.id, checked as boolean)}
-                  />
-                  <label htmlFor={priority.id} className="text-sm">
-                    {priority.label}
-                  </label>
-                </div>
-              ))}
+          {/* Access Priorities - Responsive grid */}
+          <div className="space-y-3">
+            <label className="text-sm font-medium flex items-center gap-2">
+              <Shield size={16} className="text-gray-600" />
+              Access Priorities *
+            </label>
+            <div className="grid grid-cols-1 sm:grid-cols-2 gap-3">
+              {AVAILABLE_PRIORITIES.map((priority) => {
+                const IconComponent = priority.icon;
+                return (
+                  <div key={priority.id} className="flex items-center space-x-3 p-3 border rounded-lg hover:bg-gray-50 transition-colors">
+                    <Checkbox
+                      id={priority.id}
+                      checked={newStaff.priorities.includes(priority.id)}
+                      onCheckedChange={(checked) => handlePriorityChange(priority.id, checked as boolean)}
+                    />
+                    <label htmlFor={priority.id} className="text-sm flex items-center gap-2 cursor-pointer flex-1">
+                      <IconComponent size={16} className="text-gray-600" />
+                      {priority.label}
+                    </label>
+                  </div>
+                );
+              })}
             </div>
           </div>
           
-          <div className="text-sm text-muted-foreground text-center p-3 bg-blue-50 rounded-md">
+          <div className="text-sm text-muted-foreground text-center p-4 bg-blue-50 rounded-lg border border-blue-200">
             <p>Password will be automatically generated and sent via email.</p>
           </div>
           
           <Button onClick={handleAddStaff} className="w-full">
-            Add Staff Member
+            <Plus size={16} className="mr-2" />
+            Create Staff
           </Button>
         </div>
       </DialogContent>

@@ -390,6 +390,12 @@ const StaffManagement = () => {
     setIsDialogOpen(true);
   };
 
+  // Open delete dialog
+  const openDeleteDialog = (staff: StaffMember) => {
+    setSelectedStaff(staff);
+    setIsDeleteDialogOpen(true);
+  };
+
   // Filter staff members
   const filteredStaff = staffMembers.filter(staff => {
     const matchesSearch = staff.displayName.toLowerCase().includes(searchQuery.toLowerCase()) ||
@@ -434,89 +440,91 @@ const StaffManagement = () => {
   return (
     <div className="space-y-6">
       {/* Header */}
-      <div className="flex items-center justify-between">
+      <div className="flex flex-col lg:flex-row lg:items-center lg:justify-between gap-4">
         <div>
-          <h2 className="text-2xl font-bold text-gray-900">Staff Management</h2>
-          <p className="text-gray-600">Manage staff accounts and permissions</p>
+          <h2 className="text-xl md:text-2xl font-bold text-gray-900">Staff Management</h2>
+          <p className="text-sm md:text-base text-gray-600">Manage staff accounts and permissions</p>
         </div>
-        <div className="flex gap-2">
-          <Button onClick={openCreateDialog} className="gap-2">
+        <div className="flex flex-col sm:flex-row gap-2">
+          <Button onClick={openCreateDialog} className="gap-2 w-full sm:w-auto">
             <UserPlus className="h-4 w-4" />
             Add Staff Member
           </Button>
-          <Button 
-            variant="outline" 
-            onClick={async () => {
-              await checkStaffAccountStructure();
-              await fixExistingStaffAccounts();
-            }}
-            className="gap-2"
-          >
-            🔧 Fix Staff Accounts
-          </Button>
-          <Button 
-            variant="outline" 
-            onClick={async () => {
-              await checkForOrphanedStaffAccounts();
-            }}
-            className="gap-2"
-          >
-            🔍 Check Duplicates
-          </Button>
-          <Button 
-            variant="outline" 
-            onClick={fetchStaffMembers}
-            className="gap-2"
-            disabled={isLoading}
-          >
-            🔄 Refresh
-          </Button>
+          <div className="flex gap-2">
+            <Button 
+              variant="outline" 
+              onClick={async () => {
+                await checkStaffAccountStructure();
+                await fixExistingStaffAccounts();
+              }}
+              className="gap-2 text-xs px-2 py-1 h-auto"
+            >
+              🔧 Fix Staff Accounts
+            </Button>
+            <Button 
+              variant="outline" 
+              onClick={async () => {
+                await checkForOrphanedStaffAccounts();
+              }}
+              className="gap-2 text-xs px-2 py-1 h-auto"
+            >
+              🔍 Check Duplicates
+            </Button>
+            <Button 
+              variant="outline" 
+              onClick={fetchStaffMembers}
+              className="gap-2 text-xs px-2 py-1 h-auto"
+              disabled={isLoading}
+            >
+              🔄 Refresh
+            </Button>
+          </div>
         </div>
       </div>
 
       {/* Statistics Cards */}
-      <div className="grid grid-cols-1 md:grid-cols-4 gap-4">
+      <div className="grid grid-cols-2 lg:grid-cols-4 gap-3 md:gap-4">
         <Card>
-          <CardContent className="p-4">
+          <CardContent className="p-3 md:p-4">
             <div className="flex items-center justify-between">
               <div>
-                <p className="text-sm font-medium text-gray-600">Total Staff</p>
-                <p className="text-2xl font-bold">{staffMembers.length}</p>
+                <p className="text-xs md:text-sm font-medium text-gray-600">Total Staff</p>
+                <p className="text-lg md:text-2xl font-bold">{staffMembers.length}</p>
               </div>
-              <Users className="h-8 w-8 text-blue-500" />
+              <Users className="h-6 w-6 md:h-8 md:w-8 text-blue-500" />
             </div>
           </CardContent>
         </Card>
         <Card>
-          <CardContent className="p-4">
+          <CardContent className="p-3 md:p-4">
             <div className="flex items-center justify-between">
               <div>
-                <p className="text-sm font-medium text-gray-600">Active Staff</p>
-                <p className="text-2xl font-bold">{staffMembers.filter(s => s.status === 'active').length}</p>
+                <p className="text-xs md:text-sm font-medium text-gray-600">Active Staff</p>
+                <p className="text-lg md:text-2xl font-bold">{staffMembers.filter(s => s.status === 'active').length}</p>
               </div>
-              <CheckCircle className="h-8 w-8 text-green-500" />
+              <CheckCircle className="h-6 w-6 md:h-8 md:w-8 text-green-500" />
             </div>
           </CardContent>
         </Card>
         <Card>
-          <CardContent className="p-4">
+          <CardContent className="p-3 md:p-4">
             <div className="flex items-center justify-between">
               <div>
-                <p className="text-sm font-medium text-gray-600">Admins</p>
-                <p className="text-2xl font-bold">{staffMembers.filter(s => s.role === 'admin').length}</p>
+                <p className="text-xs md:text-sm font-medium text-gray-600">Admins</p>
+                <p className="text-lg md:text-2xl font-bold">{staffMembers.filter(s => s.role === 'admin').length}</p>
               </div>
-              <Shield className="h-8 w-8 text-red-500" />
+              <Shield className="h-6 w-6 md:h-8 md:w-8 text-red-500" />
             </div>
           </CardContent>
         </Card>
         <Card>
-          <CardContent className="p-4">
+          <CardContent className="p-3 md:p-4">
             <div className="flex items-center justify-between">
               <div>
-                <p className="text-sm font-medium text-gray-600">Suspended</p>
-                <p className="text-2xl font-bold">{staffMembers.filter(s => s.status === 'suspended').length}</p>
+                <p className="text-xs md:text-sm font-medium text-gray-600">Suspended</p>
+                <p className="text-lg md:text-2xl font-bold">{staffMembers.filter(s => s.status === 'suspended').length}</p>
               </div>
-              <X className="h-8 w-8 text-yellow-500" />
+              <X className="h-6 w-6 md:h-8 md:w-8 text-yellow-500" />
             </div>
           </CardContent>
         </Card>
@@ -525,7 +533,7 @@ const StaffManagement = () => {
       {/* Search and Filters */}
       <Card>
         <CardContent className="p-4">
-          <div className="flex flex-col md:flex-row gap-4">
+          <div className="flex flex-col gap-4">
             <div className="flex-1">
               <div className="relative">
                 <Search className="h-4 w-4 absolute left-3 top-3 text-gray-400" />
@@ -537,28 +545,30 @@ const StaffManagement = () => {
                 />
               </div>
             </div>
-            <Select value={statusFilter} onValueChange={setStatusFilter}>
-              <SelectTrigger className="w-full md:w-48">
-                <SelectValue placeholder="Filter by status" />
-              </SelectTrigger>
-              <SelectContent>
-                <SelectItem value="all">All Statuses</SelectItem>
-                <SelectItem value="active">Active</SelectItem>
-                <SelectItem value="inactive">Inactive</SelectItem>
-                <SelectItem value="suspended">Suspended</SelectItem>
-              </SelectContent>
-            </Select>
-            <Select value={roleFilter} onValueChange={setRoleFilter}>
-              <SelectTrigger className="w-full md:w-48">
-                <SelectValue placeholder="Filter by role" />
-              </SelectTrigger>
-              <SelectContent>
-                <SelectItem value="all">All Roles</SelectItem>
-                <SelectItem value="admin">Admin</SelectItem>
-                <SelectItem value="staff">Staff</SelectItem>
-                <SelectItem value="moderator">Moderator</SelectItem>
-              </SelectContent>
-            </Select>
+            <div className="flex flex-col sm:flex-row gap-3">
+              <Select value={statusFilter} onValueChange={setStatusFilter}>
+                <SelectTrigger className="w-full sm:w-48">
+                  <SelectValue placeholder="Filter by status" />
+                </SelectTrigger>
+                <SelectContent>
+                  <SelectItem value="all">All Statuses</SelectItem>
+                  <SelectItem value="active">Active</SelectItem>
+                  <SelectItem value="inactive">Inactive</SelectItem>
+                  <SelectItem value="suspended">Suspended</SelectItem>
+                </SelectContent>
+              </Select>
+              <Select value={roleFilter} onValueChange={setRoleFilter}>
+                <SelectTrigger className="w-full sm:w-48">
+                  <SelectValue placeholder="Filter by role" />
+                </SelectTrigger>
+                <SelectContent>
+                  <SelectItem value="all">All Roles</SelectItem>
+                  <SelectItem value="admin">Admin</SelectItem>
+                  <SelectItem value="staff">Staff</SelectItem>
+                  <SelectItem value="moderator">Moderator</SelectItem>
+                </SelectContent>
+              </Select>
+            </div>
           </div>
         </CardContent>
       </Card>
@@ -582,132 +592,143 @@ const StaffManagement = () => {
               <p>No staff members match your current filters.</p>
             </div>
           ) : (
-            <Table>
-              <TableHeader>
-                <TableRow>
-                  <TableHead>Staff Member</TableHead>
-                  <TableHead>Contact</TableHead>
-                  <TableHead>Role & Department</TableHead>
-                  <TableHead>Status</TableHead>
-                  <TableHead>Created</TableHead>
-                  <TableHead className="text-right">Actions</TableHead>
-                </TableRow>
-              </TableHeader>
-              <TableBody>
-                {filteredStaff.map((staff) => (
-                  <TableRow key={staff.id}>
-                    <TableCell>
-                      <div className="flex items-center space-x-3">
-                        <Avatar className="h-10 w-10">
-                          <AvatarImage src={staff.profileImage} alt={staff.displayName} />
-                          <AvatarFallback>{getInitials(staff.displayName)}</AvatarFallback>
-                        </Avatar>
-                        <div>
-                          <p className="font-medium">{staff.displayName}</p>
-                          <p className="text-sm text-gray-500">{staff.email}</p>
-                        </div>
-                      </div>
-                    </TableCell>
-                    <TableCell>
-                      <div className="space-y-1">
-                        <div className="flex items-center gap-1 text-sm">
-                          <Phone className="h-3 w-3" />
-                          {staff.phone}
-                        </div>
-                        <div className="flex items-center gap-1 text-sm">
-                          <MapPin className="h-3 w-3" />
-                          {staff.location}
-                        </div>
-                      </div>
-                    </TableCell>
-                    <TableCell>
-                      <div className="space-y-2">
-                        <Badge variant={getRoleColor(staff.role) as any} className="capitalize">
-                          {staff.role}
-                        </Badge>
-                        <p className="text-sm text-gray-600">{staff.department}</p>
-                      </div>
-                    </TableCell>
-                    <TableCell>
-                      <Badge variant={getStatusColor(staff.status) as any} className="capitalize">
-                        {staff.status}
-                      </Badge>
-                    </TableCell>
-                    <TableCell>
-                      <div className="text-sm">
-                        <p>{formatDate(staff.createdAt)}</p>
-                        {staff.lastActive && (
-                          <p className="text-gray-500">Last active: {formatDate(staff.lastActive)}</p>
-                        )}
-                      </div>
-                    </TableCell>
-                    <TableCell className="text-right">
-                      <div className="flex items-center justify-end gap-2">
-                        <Button
-                          variant="outline"
-                          size="sm"
-                          onClick={() => openEditDialog(staff)}
-                        >
-                          <Edit className="h-4 w-4" />
-                        </Button>
-                        <Button
-                          variant="outline"
-                          size="sm"
-                          onClick={() => resetStaffPassword(staff.email)}
-                        >
-                          <Key className="h-4 w-4" />
-                        </Button>
-                        <Button
-                          variant="outline"
-                          size="sm"
-                          onClick={() => toggleStaffStatus(staff.id, staff.status)}
-                        >
-                          {staff.status === 'active' ? <X className="h-4 w-4" /> : <CheckCircle className="h-4 w-4" />}
-                        </Button>
-                        <AlertDialog>
-                          <AlertDialogTrigger asChild>
-                            <Button
-                              variant="outline"
-                              size="sm"
-                              onClick={() => setSelectedStaff(staff)}
-                            >
-                              <Trash2 className="h-4 w-4" />
-                            </Button>
-                          </AlertDialogTrigger>
-                          <AlertDialogContent>
-                            <AlertDialogHeader>
-                              <AlertDialogTitle>Delete Staff Member</AlertDialogTitle>
-                              <AlertDialogDescription>
-                                Are you sure you want to delete {staff.displayName}? This action cannot be undone.
-                              </AlertDialogDescription>
-                            </AlertDialogHeader>
-                            <AlertDialogFooter>
-                              <AlertDialogCancel>Cancel</AlertDialogCancel>
-                              <AlertDialogAction
-                                onClick={() => {
-                                  setSelectedStaff(staff);
-                                  setIsDeleteDialogOpen(true);
-                                }}
-                                className="bg-red-600 hover:bg-red-700"
-                              >
-                                Delete
-                              </AlertDialogAction>
-                            </AlertDialogFooter>
-                          </AlertDialogContent>
-                        </AlertDialog>
-                      </div>
-                    </TableCell>
+            <div className="w-full overflow-x-auto">
+              <Table className="min-w-full">
+                <TableHeader>
+                  <TableRow>
+                    <TableHead className="text-xs md:text-sm">Staff Member</TableHead>
+                    <TableHead className="text-xs md:text-sm">Contact</TableHead>
+                    <TableHead className="text-xs md:text-sm">Role & Department</TableHead>
+                    <TableHead className="text-xs md:text-sm">Status</TableHead>
+                    <TableHead className="text-xs md:text-sm hidden md:table-cell">Created</TableHead>
+                    <TableHead className="text-xs md:text-sm text-right">Actions</TableHead>
                   </TableRow>
-                ))}
-              </TableBody>
-            </Table>
+                </TableHeader>
+                <TableBody>
+                  {filteredStaff.map((staff) => (
+                    <TableRow key={staff.id}>
+                      <TableCell>
+                        <div className="flex items-center space-x-3">
+                          <Avatar className="h-8 w-8">
+                            <AvatarImage src={staff.profileImage} />
+                            <AvatarFallback className="text-xs">
+                              {getInitials(staff.displayName)}
+                            </AvatarFallback>
+                          </Avatar>
+                          <div className="min-w-0 flex-1">
+                            <p className="text-sm font-medium text-gray-900 truncate">
+                              {staff.displayName}
+                            </p>
+                            <p className="text-xs text-gray-500 truncate">
+                              {staff.department}
+                            </p>
+                          </div>
+                        </div>
+                      </TableCell>
+                      <TableCell>
+                        <div className="space-y-1">
+                          <div className="flex items-center gap-1 text-xs">
+                            <Mail size={12} className="text-gray-500" />
+                            <span className="truncate max-w-[120px] md:max-w-none">{staff.email}</span>
+                          </div>
+                          {staff.phone && (
+                            <div className="flex items-center gap-1 text-xs text-muted-foreground">
+                              <Phone size={12} className="text-gray-500" />
+                              <span className="truncate max-w-[120px] md:max-w-none">{staff.phone}</span>
+                            </div>
+                          )}
+                        </div>
+                      </TableCell>
+                      <TableCell>
+                        <div className="space-y-1">
+                          <Badge variant={getRoleColor(staff.role)} className="text-xs">
+                            {staff.role}
+                          </Badge>
+                          <p className="text-xs text-gray-500 truncate max-w-[100px]">
+                            {staff.department}
+                          </p>
+                        </div>
+                      </TableCell>
+                      <TableCell>
+                        <Badge variant={getStatusColor(staff.status)} className="text-xs">
+                          {staff.status}
+                        </Badge>
+                      </TableCell>
+                      <TableCell className="hidden md:table-cell text-xs text-muted-foreground">
+                        {formatDate(staff.createdAt)}
+                      </TableCell>
+                      <TableCell className="text-right">
+                        <div className="flex flex-col sm:flex-row gap-1 justify-end">
+                          <Button
+                            variant="ghost"
+                            size="sm"
+                            onClick={() => openEditDialog(staff)}
+                            className="text-xs p-1 h-auto"
+                          >
+                            <Edit size={12} className="mr-1" />
+                            Edit
+                          </Button>
+                          <Button
+                            variant="ghost"
+                            size="sm"
+                            onClick={() => resetStaffPassword(staff.email)}
+                            className="text-xs p-1 h-auto"
+                          >
+                            <Key size={12} className="mr-1" />
+                            Reset Password
+                          </Button>
+                          <Button
+                            variant="ghost"
+                            size="sm"
+                            onClick={() => toggleStaffStatus(staff.id, staff.status)}
+                            className="text-xs p-1 h-auto"
+                          >
+                            {staff.status === 'active' ? <X size={12} /> : <CheckCircle size={12} />}
+                          </Button>
+                          <AlertDialog>
+                            <AlertDialogTrigger asChild>
+                              <Button
+                                variant="ghost"
+                                size="sm"
+                                onClick={() => openDeleteDialog(staff)}
+                                className="text-xs p-1 h-auto text-red-600 hover:text-red-700"
+                              >
+                                <Trash2 size={12} />
+                                Delete
+                              </Button>
+                            </AlertDialogTrigger>
+                            <AlertDialogContent>
+                              <AlertDialogHeader>
+                                <AlertDialogTitle>Delete Staff Member</AlertDialogTitle>
+                                <AlertDialogDescription>
+                                  Are you sure you want to delete {staff.displayName}? This action cannot be undone.
+                                </AlertDialogDescription>
+                              </AlertDialogHeader>
+                              <AlertDialogFooter>
+                                <AlertDialogCancel>Cancel</AlertDialogCancel>
+                                <AlertDialogAction
+                                  onClick={deleteStaffMember}
+                                  className="bg-red-600 hover:bg-red-700"
+                                >
+                                  Delete Staff Member
+                                </AlertDialogAction>
+                              </AlertDialogFooter>
+                            </AlertDialogContent>
+                          </AlertDialog>
+                        </div>
+                      </TableCell>
+                    </TableRow>
+                  ))}
+                </TableBody>
+              </Table>
+            </div>
           )}
         </CardContent>
       </Card>
 
       {/* Create/Edit Staff Dialog */}
       <Dialog open={isDialogOpen} onOpenChange={setIsDialogOpen}>
-        <DialogContent className="max-w-2xl">
+        <DialogContent className="max-w-2xl w-[95vw] max-h-[90vh] overflow-y-auto">
           <DialogHeader>
             <DialogTitle>
               {isEditing ? 'Edit Staff Member' : 'Add New Staff Member'}
@@ -721,14 +742,17 @@ const StaffManagement = () => {
           </DialogHeader>
           
           <Form {...form}>
-            <form onSubmit={form.handleSubmit(isEditing ? updateStaffMember : createStaffAccount)} className="space-y-4">
+            <form onSubmit={form.handleSubmit(isEditing ? updateStaffMember : createStaffAccount)} className="space-y-6">
               <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
                 <FormField
                   control={form.control}
                   name="displayName"
                   render={({ field }) => (
                     <FormItem>
-                      <FormLabel>Full Name</FormLabel>
+                      <FormLabel className="flex items-center gap-2">
+                        <User size={16} className="text-gray-600" />
+                        Full Name
+                      </FormLabel>
                       <FormControl>
                         <Input placeholder="Enter full name" {...field} />
                       </FormControl>
@@ -742,7 +766,10 @@ const StaffManagement = () => {
                   name="email"
                   render={({ field }) => (
                     <FormItem>
-                      <FormLabel>Email Address</FormLabel>
+                      <FormLabel className="flex items-center gap-2">
+                        <Mail size={16} className="text-gray-600" />
+                        Email Address
+                      </FormLabel>
                       <FormControl>
                         <Input 
                           type="email" 
@@ -761,7 +788,10 @@ const StaffManagement = () => {
                   name="phone"
                   render={({ field }) => (
                     <FormItem>
-                      <FormLabel>Phone Number</FormLabel>
+                      <FormLabel className="flex items-center gap-2">
+                        <Phone size={16} className="text-gray-600" />
+                        Phone Number
+                      </FormLabel>
                       <FormControl>
                         <Input placeholder="+233 XX XXX XXXX" {...field} />
                       </FormControl>
@@ -775,7 +805,10 @@ const StaffManagement = () => {
                   name="location"
                   render={({ field }) => (
                     <FormItem>
-                      <FormLabel>Location</FormLabel>
+                      <FormLabel className="flex items-center gap-2">
+                        <MapPin size={16} className="text-gray-600" />
+                        Location
+                      </FormLabel>
                       <FormControl>
                         <Input placeholder="City, Region" {...field} />
                       </FormControl>
@@ -789,7 +822,10 @@ const StaffManagement = () => {
                   name="role"
                   render={({ field }) => (
                     <FormItem>
-                      <FormLabel>Role</FormLabel>
+                      <FormLabel className="flex items-center gap-2">
+                        <Shield size={16} className="text-gray-600" />
+                        Role
+                      </FormLabel>
                       <Select onValueChange={field.onChange} defaultValue={field.value}>
                         <FormControl>
                           <SelectTrigger>
