@@ -7,7 +7,7 @@ import {
   User
 } from "firebase/auth";
 import { doc, setDoc, getDoc, updateDoc, collection, query, where, getDocs, addDoc } from "firebase/firestore";
-import { auth, db } from "@/lib/firebase";
+import { auth, db, firebaseConfig } from "@/lib/firebase";
 
 export type UserRole = 'home_owner' | 'artisan' | 'admin' | 'staff' | 'estate_manager' | 'tenant';
 export type UserStatus = 'pending' | 'approved' | 'rejected' | 'active' | 'suspended';
@@ -39,6 +39,8 @@ class AuthService {
   // Sign up with role
   async signUp(email: string, password: string, displayName: string, role: UserRole, additionalData?: Partial<UserProfile>) {
     try {
+      console.log('[Auth] signUp init', { email, displayName, role });
+      console.log('[Auth] using project', firebaseConfig.projectId, 'authDomain', firebaseConfig.authDomain);
       const userCredential = await createUserWithEmailAndPassword(auth, email, password);
       const user = userCredential.user;
 
@@ -69,14 +71,45 @@ class AuthService {
   // Sign in
   async signIn(email: string, password: string) {
     try {
+      console.log('🔐 Attempting to sign in with:', email);
+      console.log('[Auth] projectId:', firebaseConfig.projectId);
+      console.log('[Auth] authDomain:', firebaseConfig.authDomain);
+      console.log('[Auth] apiKey prefix:', firebaseConfig.apiKey?.slice(0, 6));
+      
       const userCredential = await signInWithEmailAndPassword(auth, email, password);
       const user = userCredential.user;
       
+      console.log('✅ Firebase Auth successful, user ID:', user.uid);
+      
       // Get user profile
-      const profile = await this.getUserProfile(user.uid);
+      console.log('📋 Fetching user profile...');
+      let profile = await this.getUserProfile(user.uid);
+      
+      if (profile) {
+        console.log('✅ User profile found:', profile.role, profile.status);
+      } else {
+        console.log('⚠️ No user profile found in Firestore - creating default profile');
+        // Create a default profile if none exists
+        profile = await this.createDefaultProfile(user);
+      }
+      
       return { user, profile };
-    } catch (error) {
-      console.error('Error signing in:', error);
+    } catch (error: any) {
+      console.error('❌ Error signing in:', error);
+      console.error('Error code:', error.code);
+      console.error('Error message:', error.message);
+      
+      // Provide more specific error messages
+      if (error.code === 'auth/user-not-found') {
+        throw new Error('No account found with this email address. Please create an account first.');
+      } else if (error.code === 'auth/wrong-password') {
+        throw new Error('Incorrect password. Please try again.');
+      } else if (error.code === 'auth/too-many-requests') {
+        throw new Error('Too many failed login attempts. Please try again later.');
+      } else if (error.code === 'auth/network-request-failed') {
+        throw new Error('Network error. Please check your internet connection.');
+      }
+      
       throw error;
     }
   }
@@ -91,6 +124,17 @@ class AuthService {
     }
   }
 
+  // Helper method to safely convert Firebase timestamps to Date objects
+  private safeToDate(timestamp: any): Date | null {
+    if (!timestamp) return null;
+    try {
+      return timestamp.toDate();
+    } catch (error) {
+      console.warn('Failed to convert timestamp to date:', error);
+      return null;
+    }
+  }
+
   // Get user profile
   async getUserProfile(uid: string): Promise<UserProfile | null> {
     try {
@@ -99,11 +143,12 @@ class AuthService {
       
       if (docSnap.exists()) {
         const data = docSnap.data();
+        
         return {
           ...data,
-          createdAt: data.createdAt.toDate(),
-          updatedAt: data.updatedAt.toDate(),
-          verificationDate: data.verificationDate?.toDate()
+          createdAt: this.safeToDate(data.createdAt) || new Date(),
+          updatedAt: this.safeToDate(data.updatedAt) || new Date(),
+          verificationDate: this.safeToDate(data.verificationDate)
         } as UserProfile;
       }
       
@@ -141,6 +186,32 @@ class AuthService {
   // Get current user
   getCurrentUser(): User | null {
     return auth.currentUser;
+  }
+
+  // Create default profile for existing users
+  private async createDefaultProfile(user: User): Promise<UserProfile> {
+    try {
+      console.log('🔧 Creating default profile for user:', user.uid);
+      
+      const defaultProfile: UserProfile = {
+        uid: user.uid,
+        email: user.email!,
+        displayName: user.displayName || 'User',
+        role: 'home_owner', // Default role
+        status: 'pending',
+        createdAt: new Date(),
+        updatedAt: new Date(),
+        isVerified: false
+      };
+      
+      await setDoc(doc(db, 'users', user.uid), defaultProfile);
+      console.log('✅ Default profile created successfully');
+      
+      return defaultProfile;
+    } catch (error) {
+      console.error('❌ Error creating default profile:', error);
+      throw new Error('Failed to create user profile. Please try again.');
+    }
   }
 
   // Check if user has role
@@ -195,9 +266,9 @@ class AuthService {
         const data = doc.data();
         return {
           ...data,
-          createdAt: data.createdAt.toDate(),
-          updatedAt: data.updatedAt.toDate(),
-          verificationDate: data.verificationDate?.toDate()
+          createdAt: this.safeToDate(data.createdAt) || new Date(),
+          updatedAt: this.safeToDate(data.updatedAt) || new Date(),
+          verificationDate: this.safeToDate(data.verificationDate)
         } as UserProfile;
       });
     } catch (error) {
@@ -219,9 +290,9 @@ class AuthService {
         const data = doc.data();
         return {
           ...data,
-          createdAt: data.createdAt.toDate(),
-          updatedAt: data.updatedAt.toDate(),
-          verificationDate: data.verificationDate?.toDate()
+          createdAt: this.safeToDate(data.createdAt) || new Date(),
+          updatedAt: this.safeToDate(data.updatedAt) || new Date(),
+          verificationDate: this.safeToDate(data.verificationDate)
         } as UserProfile;
       });
     } catch (error) {
@@ -243,9 +314,9 @@ class AuthService {
         const data = doc.data();
         return {
           ...data,
-          createdAt: data.createdAt.toDate(),
-          updatedAt: data.updatedAt.toDate(),
-          verificationDate: data.verificationDate?.toDate()
+          createdAt: this.safeToDate(data.createdAt) || new Date(),
+          updatedAt: this.safeToDate(data.updatedAt) || new Date(),
+          verificationDate: this.safeToDate(data.verificationDate)
         } as UserProfile;
       });
     } catch (error) {
@@ -266,19 +337,39 @@ class AuthService {
     about: string;
     profileImageUrl?: string;
     idImageUrl?: string;
+    profileImagePublicId?: string;
+    idImagePublicId?: string;
   }): Promise<string> {
     try {
+      // For application forms, we allow unauthenticated submissions
+      // The applicantId will be null until they're approved and create an account
+      const currentUser = auth.currentUser;
+
       const application = {
         ...applicationData,
+        applicantId: currentUser?.uid || null, // Can be null for new applications
         status: 'pending' as const,
         submittedDate: new Date().toISOString(),
         priority: 'medium',
         reviewedBy: null,
         reviewNotes: null,
-        lastUpdated: new Date().toISOString()
+        lastUpdated: new Date().toISOString(),
+        // Store Cloudinary metadata for future reference
+        cloudinaryData: {
+          profileImage: {
+            url: applicationData.profileImageUrl,
+            publicId: applicationData.profileImagePublicId
+          },
+          idImage: {
+            url: applicationData.idImageUrl,
+            publicId: applicationData.idImagePublicId
+          }
+        }
       };
 
+      console.log('Submitting application:', application);
       const docRef = await addDoc(collection(db, 'homeOwnerApplications'), application);
+      console.log('Application submitted successfully with ID:', docRef.id);
       return docRef.id;
     } catch (error) {
       console.error('Error submitting home owner application:', error);
@@ -298,8 +389,15 @@ class AuthService {
     idImageUrl?: string;
   }): Promise<string> {
     try {
+      // Get current authenticated user
+      const currentUser = auth.currentUser;
+      if (!currentUser) {
+        throw new Error('User must be authenticated to submit an application');
+      }
+
       const application = {
         ...applicationData,
+        applicantId: currentUser.uid,
         status: 'pending' as const,
         submittedDate: new Date().toISOString(),
         priority: 'medium',
@@ -308,7 +406,9 @@ class AuthService {
         lastUpdated: new Date().toISOString()
       };
 
+      console.log('Submitting artisan application:', application);
       const docRef = await addDoc(collection(db, 'artisanApplications'), application);
+      console.log('Artisan application submitted successfully with ID:', docRef.id);
       return docRef.id;
     } catch (error) {
       console.error('Error submitting artisan application:', error);

@@ -1,6 +1,7 @@
 
 import React from 'react';
 import { Home, Ruler, Calendar } from 'lucide-react';
+import MapSearchView from '@/components/maps/MapSearchView';
 import { format } from 'date-fns';
 import { Property } from '@/data/types';
 
@@ -53,6 +54,15 @@ const PropertyDetails = ({ property }: PropertyDetailsProps) => {
           </li>
         ))}
       </ul>
+      
+      {property.mapLocation && (
+        <div className="mt-6">
+          <h3 className="font-medium mb-2">Location</h3>
+          <div className="h-[220px]">
+            <MapSearchView properties={[property as any]} />
+          </div>
+        </div>
+      )}
       
       <div className="mt-6 flex items-center gap-2 text-sm text-muted-foreground">
         <Calendar size={16} />

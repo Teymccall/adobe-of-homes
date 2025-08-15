@@ -79,7 +79,7 @@ const PropertyOwnerDetails = ({ form }: PropertyOwnerDetailsProps) => {
             render={({ field }) => (
               <FormItem>
                 <FormLabel>ID Type *</FormLabel>
-                <Select onValueChange={field.onChange} value={field.value}>
+                <Select onValueChange={field.onChange} value={field.value || ''}>
                   <FormControl>
                     <SelectTrigger>
                       <SelectValue placeholder="Select ID type" />

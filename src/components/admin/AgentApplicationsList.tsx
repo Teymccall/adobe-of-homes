@@ -15,6 +15,7 @@ import { AlertDialog, AlertDialogAction, AlertDialogCancel, AlertDialogContent, 
 import { useToast } from '@/hooks/use-toast';
 import { adminService } from '@/services/adminService';
 import { authService } from '@/services/authService';
+import { DocumentDownloadHandler } from '@/components/ui/DocumentDownloadHandler';
 
 interface HomeOwnerApplication {
   id: string;
@@ -534,10 +535,13 @@ const AgentApplicationsList = () => {
                         className="w-full h-auto max-h-48 object-cover"
                       />
                       <div className="p-2 bg-gray-50 text-center">
-                        <Button variant="outline" size="sm" className="gap-2">
-                          <Download className="h-3 w-3" />
-                          Download
-                        </Button>
+                        <DocumentDownloadHandler
+                          documentUrl={selectedApplication.idImageUrl}
+                          documentName={`${selectedApplication.name}_ID_Document.pdf`}
+                          applicantName={selectedApplication.name}
+                          documentType="identification"
+                          className="w-full"
+                        />
                       </div>
                     </div>
                   </div>

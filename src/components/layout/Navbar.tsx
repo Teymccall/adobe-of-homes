@@ -1,5 +1,5 @@
 
-import React from 'react';
+import React, { useState, useEffect } from 'react';
 import { Link } from 'react-router-dom';
 import { Menu, X, Home, Search, User, List, LogIn, ChevronDown, Building, UserCog } from 'lucide-react';
 import { Button } from '@/components/ui/button';
@@ -10,9 +10,31 @@ import {
   DropdownMenuTrigger
 } from '@/components/ui/dropdown-menu';
 import { cn } from '@/lib/utils';
+import { notificationService, NotificationCounts } from '@/services/notificationService';
+import { NavNotificationBadge, DropdownNotificationBadge } from '@/components/ui/NotificationBadge';
 
 const Navbar = () => {
   const [isMenuOpen, setIsMenuOpen] = React.useState(false);
+  const [notificationCounts, setNotificationCounts] = useState<NotificationCounts>({
+    homeOwnerApplications: 0,
+    artisanApplications: 0,
+    propertyVerifications: 0,
+    maintenanceRequests: 0,
+    payments: 0,
+    reports: 0
+  });
+
+  useEffect(() => {
+    // Fetch initial notification counts
+    notificationService.fetchNotificationCounts();
+    
+    // Subscribe to notification updates
+    const unsubscribe = notificationService.subscribe((counts) => {
+      setNotificationCounts(counts);
+    });
+
+    return unsubscribe;
+  }, []);
 
   const toggleMenu = () => {
     setIsMenuOpen(!isMenuOpen);
@@ -40,7 +62,7 @@ const Navbar = () => {
 
         {/* Desktop navigation */}
         <nav className="hidden md:flex items-center gap-6">
-          <NavLinks />
+          <NavLinks notificationCounts={notificationCounts} />
           <Button asChild variant="default" className="bg-ghana-primary hover:bg-ghana-primary/90">
             <Link to="/submit-listing">Submit Listing</Link>
           </Button>
@@ -56,7 +78,7 @@ const Navbar = () => {
       >
         <div className="container mx-auto px-4 py-4 space-y-4">
           <nav className="flex flex-col gap-4">
-            <NavLinks mobile />
+            <NavLinks mobile notificationCounts={notificationCounts} />
           </nav>
           <Button asChild className="w-full bg-ghana-primary hover:bg-ghana-primary/90">
             <Link to="/submit-listing">Submit Listing</Link>
@@ -67,13 +89,13 @@ const Navbar = () => {
   );
 };
 
-const NavLinks = ({ mobile = false }: { mobile?: boolean }) => {
+const NavLinks = ({ mobile = false, notificationCounts }: { mobile?: boolean; notificationCounts: NotificationCounts }) => {
   const links = [
     { href: "/", text: "Home", icon: <Home size={mobile ? 20 : 16} /> },
     { href: "/search", text: "Find Properties", icon: <Search size={mobile ? 20 : 16} /> },
-    { isDropdown: true, text: "Home Owners", icon: <User size={mobile ? 20 : 16} /> },
+    { isDropdown: true, text: "Home Owners", icon: <User size={mobile ? 20 : 16} />, notificationCount: notificationCounts.homeOwnerApplications },
     { href: "/artisans", text: "Artisans", icon: <List size={mobile ? 20 : 16} /> },
-    { isDropdown: true, text: "Management", icon: <Building size={mobile ? 20 : 16} /> },
+    { isDropdown: true, text: "Management", icon: <Building size={mobile ? 20 : 16} />, notificationCount: notificationCounts.artisanApplications },
   ];
 
   return (
@@ -89,6 +111,7 @@ const NavLinks = ({ mobile = false }: { mobile?: boolean }) => {
                 )}>
                   {link.icon}
                   <span>{link.text}</span>
+                  <NavNotificationBadge count={link.notificationCount || 0} />
                   <ChevronDown size={mobile ? 18 : 14} />
                 </DropdownMenuTrigger>
                 <DropdownMenuContent align={mobile ? "start" : "end"} className="bg-white border shadow-md">
@@ -102,6 +125,20 @@ const NavLinks = ({ mobile = false }: { mobile?: boolean }) => {
                     <Link to="/apply-home-owner" className="flex items-center gap-2 w-full cursor-pointer">
                       <User size={16} />
                       <span>Register as Home Owner</span>
+                    </Link>
+                  </DropdownMenuItem>
+                  <DropdownMenuItem asChild>
+                    <Link to="/admin-dashboard?tab=applications" className="flex items-center gap-2 w-full cursor-pointer">
+                      <List size={16} />
+                      <span>Applications</span>
+                      <DropdownNotificationBadge count={notificationCounts.homeOwnerApplications} />
+                    </Link>
+                  </DropdownMenuItem>
+                  <DropdownMenuItem asChild>
+                    <Link to="/admin-dashboard?tab=agents" className="flex items-center gap-2 w-full cursor-pointer">
+                      <User size={16} />
+                      <span>Manage</span>
+                      <DropdownNotificationBadge count={notificationCounts.propertyVerifications} />
                     </Link>
                   </DropdownMenuItem>
                 </DropdownMenuContent>
@@ -119,6 +156,7 @@ const NavLinks = ({ mobile = false }: { mobile?: boolean }) => {
                 )}>
                   {link.icon}
                   <span>{link.text}</span>
+                  <NavNotificationBadge count={link.notificationCount || 0} />
                   <ChevronDown size={mobile ? 18 : 14} />
                 </DropdownMenuTrigger>
                 <DropdownMenuContent align={mobile ? "start" : "end"} className="bg-white border shadow-md">
@@ -138,6 +176,7 @@ const NavLinks = ({ mobile = false }: { mobile?: boolean }) => {
                     <Link to="/super-admin-login" className="flex items-center gap-2 w-full cursor-pointer">
                       <User size={16} />
                       <span>Admin Login</span>
+                      <DropdownNotificationBadge count={notificationCounts.artisanApplications} />
                     </Link>
                   </DropdownMenuItem>
                 </DropdownMenuContent>

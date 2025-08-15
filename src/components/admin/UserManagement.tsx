@@ -90,8 +90,11 @@ const UserManagement: React.FC = () => {
 
   // Filter users based on search and filters
   const filteredUsers = users.filter(user => {
-    const matchesSearch = user.name.toLowerCase().includes(searchQuery.toLowerCase()) ||
-                         user.email.toLowerCase().includes(searchQuery.toLowerCase());
+    const userName = user.name || user.displayName || 'Unknown User';
+    const userEmail = user.email || '';
+    
+    const matchesSearch = userName.toLowerCase().includes(searchQuery.toLowerCase()) ||
+                         userEmail.toLowerCase().includes(searchQuery.toLowerCase());
     const matchesRole = roleFilter === 'all' || user.role === roleFilter;
     const matchesStatus = statusFilter === 'all' || user.status === statusFilter;
     
@@ -168,8 +171,39 @@ const UserManagement: React.FC = () => {
     }
   };
 
-  const formatDate = (date: Date) => {
-    return date.toLocaleDateString('en-GB', {
+  const formatDate = (date: any) => {
+    // Handle different date formats safely
+    if (!date) return 'Not specified';
+    
+    let dateObj: Date;
+    
+    // If it's a Firebase Timestamp
+    if (date && typeof date === 'object' && date.toDate) {
+      dateObj = date.toDate();
+    }
+    // If it's already a Date object
+    else if (date instanceof Date) {
+      dateObj = date;
+    }
+    // If it's a string, try to parse it
+    else if (typeof date === 'string') {
+      dateObj = new Date(date);
+    }
+    // If it's a number (timestamp), create Date from it
+    else if (typeof date === 'number') {
+      dateObj = new Date(date);
+    }
+    // Fallback
+    else {
+      return 'Invalid date';
+    }
+    
+    // Check if the date is valid
+    if (isNaN(dateObj.getTime())) {
+      return 'Invalid date';
+    }
+    
+    return dateObj.toLocaleDateString('en-GB', {
       year: 'numeric',
       month: 'short',
       day: 'numeric'
@@ -310,28 +344,32 @@ const UserManagement: React.FC = () => {
               </TableRow>
             </TableHeader>
             <TableBody>
-              {filteredUsers.map((user) => (
-                <TableRow key={user.id}>
-                  <TableCell>
-                    <div className="flex items-center space-x-3">
-                      <Avatar className="h-10 w-10">
-                        <AvatarImage src={user.profileImage} alt={user.name} />
-                        <AvatarFallback>{getInitials(user.name)}</AvatarFallback>
-                      </Avatar>
-                      <div>
-                        <div className="flex items-center gap-2">
-                          <p className="font-medium">{user.name}</p>
-                          {user.isVerified && (
-                            <UserCheck className="h-4 w-4 text-blue-500" />
+              {filteredUsers.map((user) => {
+                const userName = user.name || user.displayName || 'Unknown User';
+                const userEmail = user.email || '';
+                
+                return (
+                  <TableRow key={user.id}>
+                    <TableCell>
+                      <div className="flex items-center space-x-3">
+                        <Avatar className="h-10 w-10">
+                          <AvatarImage src={user.profileImage} alt={userName} />
+                          <AvatarFallback>{getInitials(userName)}</AvatarFallback>
+                        </Avatar>
+                        <div>
+                          <div className="flex items-center gap-2">
+                            <p className="font-medium">{userName}</p>
+                            {user.isVerified && (
+                              <UserCheck className="h-4 w-4 text-blue-500" />
+                            )}
+                          </div>
+                          <p className="text-sm text-gray-500">{userEmail}</p>
+                          {user.phone && (
+                            <p className="text-xs text-gray-400">{user.phone}</p>
                           )}
                         </div>
-                        <p className="text-sm text-gray-500">{user.email}</p>
-                        {user.phone && (
-                          <p className="text-xs text-gray-400">{user.phone}</p>
-                        )}
                       </div>
-                    </div>
-                  </TableCell>
+                    </TableCell>
                   <TableCell>
                     <Badge variant={getRoleColor(user.role) as any} className="capitalize">
                       {user.role.replace('_', ' ')}
@@ -410,7 +448,8 @@ const UserManagement: React.FC = () => {
                     </DropdownMenu>
                   </TableCell>
                 </TableRow>
-              ))}
+                );
+              })}
             </TableBody>
           </Table>
         </CardContent>
@@ -422,7 +461,7 @@ const UserManagement: React.FC = () => {
           <AlertDialogHeader>
             <AlertDialogTitle>Delete User</AlertDialogTitle>
             <AlertDialogDescription>
-              Are you sure you want to delete {userToDelete?.name}? This action cannot be undone.
+              Are you sure you want to delete {userToDelete?.name || userToDelete?.displayName || 'this user'}? This action cannot be undone.
               All associated data will be permanently removed.
             </AlertDialogDescription>
           </AlertDialogHeader>

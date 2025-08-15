@@ -61,9 +61,25 @@ const PropertyDetail = () => {
     );
   }
 
-  if (!property || !agent) {
+  if (!property) {
     return <PropertyNotFound />;
   }
+
+  // For admin-created properties, we might not have an agent, so create a fallback
+  const displayAgent = agent || {
+    uid: property.homeOwnerId,
+    displayName: property.ownerName || 'Admin User',
+    email: property.ownerEmail || '',
+    phone: property.ownerPhone || '',
+    isVerified: true,
+    profileImage: '',
+    bio: 'Property created by platform administrator',
+    yearsOfExperience: 0,
+    properties: [],
+    reviews: [],
+    averageRating: 0,
+    verifiedProperties: []
+  };
 
   return (
     <Layout>
@@ -98,7 +114,7 @@ const PropertyDetail = () => {
           {/* Agent Info & Contact */}
           <div>
             <AgentContact 
-              agent={agent} 
+              agent={displayAgent} 
               propertyTitle={property.title} 
               propertyPrice={property.price} 
             />

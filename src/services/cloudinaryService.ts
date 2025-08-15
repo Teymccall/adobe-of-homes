@@ -63,6 +63,7 @@ class CloudinaryService {
       const formData = new FormData();
       formData.append('file', file);
       formData.append('upload_preset', CLOUDINARY_CONFIG.uploadPreset);
+      formData.append('cloud_name', CLOUDINARY_CONFIG.cloudName);
       
       if (folder) {
         formData.append('folder', folder);
@@ -95,6 +96,12 @@ class CloudinaryService {
       // Add timestamp for cache busting
       formData.append('timestamp', Date.now().toString());
 
+      // Log form data for debugging
+      console.log('Cloudinary upload form data:');
+      for (let [key, value] of formData.entries()) {
+        console.log(`${key}:`, value);
+      }
+
       // Create XMLHttpRequest for progress tracking
       return new Promise((resolve, reject) => {
         const xhr = new XMLHttpRequest();
@@ -113,15 +120,29 @@ class CloudinaryService {
         }
 
         xhr.addEventListener('load', () => {
+          console.log('Cloudinary response status:', xhr.status);
+          console.log('Cloudinary response:', xhr.responseText);
+          
           if (xhr.status === 200) {
             try {
               const result = JSON.parse(xhr.responseText);
               resolve(this.formatUploadResult(result));
             } catch (error) {
+              console.error('Failed to parse Cloudinary response:', error);
               reject(new Error('Failed to parse upload response'));
             }
           } else {
-            reject(new Error(`Upload failed with status: ${xhr.status}`));
+            let errorMessage = `Upload failed with status: ${xhr.status}`;
+            try {
+              const errorResponse = JSON.parse(xhr.responseText);
+              if (errorResponse.error && errorResponse.error.message) {
+                errorMessage = `Cloudinary Error: ${errorResponse.error.message}`;
+              }
+            } catch (parseError) {
+              // Use default error message
+            }
+            console.error('Cloudinary upload failed:', errorMessage);
+            reject(new Error(errorMessage));
           }
         });
 
@@ -184,12 +205,9 @@ class CloudinaryService {
       resourceType: 'image',
       tags: ['property', propertyId],
       quality: 'auto',
-      format: 'auto',
-      eager: [
-        'w_300,h_200,c_fill',  // thumbnail
-        'w_600,h_400,c_fill',  // medium
-        'w_1200,h_800,c_fill'  // large
-      ]
+      format: 'auto'
+      // Note: Eager transformations removed for unsigned uploads
+      // Images will be transformed on-demand using Cloudinary URLs
     }, onProgress);
   }
 
@@ -205,13 +223,10 @@ class CloudinaryService {
       resourceType: 'image',
       tags: ['profile', userType, userId],
       quality: 'auto',
-      format: 'auto',
-      eager: [
-        'w_200,h_200,c_fill,g_face', // profile thumbnail
-        'w_400,h_400,c_fill,g_face'  // profile large
-      ],
-      onProgress
-    });
+      format: 'auto'
+      // Note: Eager transformations removed for unsigned uploads
+      // Images will be transformed on-demand using Cloudinary URLs
+    }, onProgress);
   }
 
   // Upload ID document
@@ -243,12 +258,9 @@ class CloudinaryService {
       resourceType: 'image',
       tags: ['artisan', 'portfolio', artisanId],
       quality: 'auto',
-      format: 'auto',
-      eager: [
-        'w_300,h_300,c_fill',   // square thumbnail
-        'w_600,h_400,c_fill',   // medium
-        'w_1200,h_800,c_fill'   // large
-      ]
+      format: 'auto'
+      // Note: Eager transformations removed for unsigned uploads
+      // Images will be transformed on-demand using Cloudinary URLs
     }, onProgress);
   }
 
@@ -296,13 +308,13 @@ class CloudinaryService {
     return getDocumentUrl(publicId);
   }
 
-  // Generate different image sizes
+  // Generate different image sizes using on-demand transformations
   getImageSizes(publicId: string) {
     return {
-      thumbnail: getOptimizedImageUrl(publicId, { width: 150, height: 150, crop: 'fill' }),
-      small: getOptimizedImageUrl(publicId, { width: 300, height: 200, crop: 'fill' }),
-      medium: getOptimizedImageUrl(publicId, { width: 600, height: 400, crop: 'fill' }),
-      large: getOptimizedImageUrl(publicId, { width: 1200, height: 800, crop: 'fill' }),
+      thumbnail: `https://res.cloudinary.com/${CLOUDINARY_CONFIG.cloudName}/image/upload/w_150,h_150,c_fill/${publicId}`,
+      small: `https://res.cloudinary.com/${CLOUDINARY_CONFIG.cloudName}/image/upload/w_300,h_200,c_fill/${publicId}`,
+      medium: `https://res.cloudinary.com/${CLOUDINARY_CONFIG.cloudName}/image/upload/w_600,h_400,c_fill/${publicId}`,
+      large: `https://res.cloudinary.com/${CLOUDINARY_CONFIG.cloudName}/image/upload/w_1200,h_800,c_fill/${publicId}`,
       original: `https://res.cloudinary.com/${CLOUDINARY_CONFIG.cloudName}/image/upload/${publicId}`
     };
   }

@@ -2,6 +2,7 @@
 import React from 'react';
 import { FormField, FormControl, FormItem, FormLabel, FormMessage } from '@/components/ui/form';
 import { Input } from '@/components/ui/input';
+import { Button } from '@/components/ui/button';
 import { UseFormReturn } from 'react-hook-form';
 
 interface PropertyContactFormProps {
@@ -32,7 +33,20 @@ const PropertyContactForm = ({ form }: PropertyContactFormProps) => {
           <FormItem>
             <FormLabel>Location</FormLabel>
             <FormControl>
-              <Input placeholder="East Legon, Accra" {...field} />
+              <div className="flex gap-2">
+                <Input placeholder="East Legon, Accra" {...field} />
+                <Button
+                  type="button"
+                  variant="outline"
+                  onClick={() => {
+                    // focus the map section and scroll into view
+                    const el = document.querySelector('#map-location');
+                    if (el) el.scrollIntoView({ behavior: 'smooth', block: 'center' });
+                  }}
+                >
+                  Use Map
+                </Button>
+              </div>
             </FormControl>
             <FormMessage />
           </FormItem>

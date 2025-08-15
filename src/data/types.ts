@@ -21,6 +21,7 @@ export interface Property {
   features: string[];
   images: string[];
   isVerified: boolean;
+  isFeatured?: boolean;
   homeOwnerId: string;
   createdAt: Date;
   status: PropertyStatus;
@@ -90,6 +91,7 @@ export interface SearchFilters {
   priceRange: string;
   bedrooms: string;
   stayDuration: string;
+  showMap?: boolean;
 }
 
 export interface PropertyOwner {

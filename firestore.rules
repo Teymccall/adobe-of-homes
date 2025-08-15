@@ -22,9 +22,7 @@ service cloud.firestore {
       return isAuthenticated() && getUserData().status in ['approved', 'active'];
     }
     
-    function isVerified() {
-      return isAuthenticated() && getUserData().isVerified == true;
-    }
+
     
     function isOwner(resourceUserId) {
       return isAuthenticated() && request.auth.uid == resourceUserId;
@@ -32,7 +30,7 @@ service cloud.firestore {
 
     // Users collection - user profiles
     match /users/{userId} {
-      // Users can read their own profile
+      // Users can read their own profile (FIXED: removed circular dependency)
       allow read: if isOwner(userId);
       
       // Users can create their own profile during signup
@@ -42,17 +40,19 @@ service cloud.firestore {
       
       // Users can update their own profile (except role and status)
       allow update: if isOwner(userId) && 
-        !('role' in request.resource.data.diff(resource.data)) &&
-        !('status' in request.resource.data.diff(resource.data));
+        !('role' in request.resource.data.diff(resource.data).affectedKeys()) &&
+        !('status' in request.resource.data.diff(resource.data).affectedKeys());
       
-      // Admins can read, update, and delete any user
-      allow read, update, delete: if hasRole('admin');
+      // Admins can read, update, and delete any user (FIXED: check if user exists first)
+      allow read, update, delete: if isAuthenticated() && 
+        (isOwner(userId) || (resource != null && hasRole('admin')));
       
       // Staff can read and update user status/verification
-      allow read: if hasRole('staff');
-      allow update: if hasRole('staff') && 
-        request.resource.data.diff(resource.data).affectedKeys()
-          .hasOnly(['status', 'isVerified', 'verificationDate', 'updatedAt']);
+      allow read: if isAuthenticated() && 
+        (isOwner(userId) || (resource != null && hasRole('staff')));
+      allow update: if isAuthenticated() && 
+        (isOwner(userId) || (resource != null && hasRole('staff'))) && 
+        request.resource.data.diff(resource.data).affectedKeys().hasOnly(['status', 'isVerified', 'verificationDate', 'updatedAt']);
     }
 
     // Properties collection
@@ -85,11 +85,13 @@ service cloud.firestore {
       
       // Staff can update property verification status
       allow update: if hasRole('staff') && 
-        request.resource.data.diff(resource.data).affectedKeys()
-          .hasOnly(['isVerified', 'verificationStatus', 'verificationDate', 'verifiedBy', 'updatedAt']);
+        request.resource.data.diff(resource.data).affectedKeys().hasOnly(['isVerified', 'verificationStatus', 'verificationDate', 'verifiedBy', 'updatedAt']);
       
       // Admins can do everything with properties
       allow write: if hasRole('admin');
+      
+      // Allow public read access for property listings
+      allow read: if true;
     }
 
     // Reviews collection
@@ -130,6 +132,38 @@ service cloud.firestore {
       
       // Admins and staff can read and update applications
       allow read, update: if hasAnyRole(['admin', 'staff']);
+    }
+
+    // Home Owner Applications collection
+    match /homeOwnerApplications/{applicationId} {
+      // Anyone can create home owner applications
+      allow create: if true;
+      
+      // Admins and staff can read and update applications
+      allow read, update: if hasAnyRole(['admin', 'staff']);
+      
+      // Users can read their own applications by email match
+      allow read: if isAuthenticated() && 
+        request.auth.token.email == resource.data.email;
+      
+      // Allow unauthenticated read for public access (needed for application forms)
+      allow read: if true;
+    }
+
+    // Artisan Applications collection
+    match /artisanApplications/{applicationId} {
+      // Anyone can create artisan applications
+      allow create: if true;
+      
+      // Admins and staff can read and update applications
+      allow read, update: if hasAnyRole(['admin', 'staff']);
+      
+      // Users can read their own applications by email match
+      allow read: if isAuthenticated() && 
+        request.auth.token.email == resource.data.email;
+      
+      // Allow unauthenticated read for public access (needed for application forms)
+      allow read: if true;
     }
 
     // Artisans collection
@@ -191,6 +225,11 @@ service cloud.firestore {
       allow write: if hasRole('admin');
     }
 
+    // Admin service access - allow admin and staff to read all collections
+    match /{collection}/{document} {
+      allow read: if hasAnyRole(['admin', 'staff']);
+    }
+    
     // Default deny all other operations
     match /{document=**} {
       allow read, write: if false;

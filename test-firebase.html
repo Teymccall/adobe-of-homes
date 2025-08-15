@@ -1,0 +1,118 @@
+<!DOCTYPE html>
+<html>
+<head>
+    <title>Firebase Test</title>
+    <script src="https://www.gstatic.com/firebasejs/10.7.1/firebase-app-compat.js"></script>
+    <script src="https://www.gstatic.com/firebasejs/10.7.1/firebase-auth-compat.js"></script>
+    <script src="https://www.gstatic.com/firebasejs/10.7.1/firebase-firestore-compat.js"></script>
+</head>
+<body>
+    <h1>Firebase Connection Test</h1>
+    <button onclick="testConnection()">Test Firebase Connection</button>
+    <button onclick="createAdmin()">Create Admin User</button>
+    <button onclick="testLogin()">Test Login</button>
+    <div id="output"></div>
+
+    <script>
+        // Your Firebase config
+        const firebaseConfig = {
+            apiKey: "AIzaSyB69I8jFRazBAgt7ktXl3KiBz_IAeFWqAw",
+            authDomain: "adobe-of-homes-81920.firebaseapp.com",
+            databaseURL: "https://adobe-of-homes-81920-default-rtdb.firebaseio.com",
+            projectId: "adobe-of-homes-81920",
+            storageBucket: "adobe-of-homes-81920.firebasestorage.app",
+            messagingSenderId: "787532865176",
+            appId: "1:787532865176:web:03fb16c1b84894a59efaed"
+        };
+
+        // Initialize Firebase
+        firebase.initializeApp(firebaseConfig);
+        const auth = firebase.auth();
+        const db = firebase.firestore();
+
+        function log(message) {
+            document.getElementById('output').innerHTML += '<p>' + message + '</p>';
+        }
+
+        async function testConnection() {
+            try {
+                log('🔍 Testing Firebase connection...');
+                
+                // Test if we can access Firestore
+                const testDoc = await db.collection('test').doc('connection').get();
+                log('✅ Firestore connection successful!');
+                
+                // Test if we can access Auth
+                const currentUser = auth.currentUser;
+                log('✅ Firebase Auth connection successful!');
+                
+                log('🎉 All Firebase services are working!');
+            } catch (error) {
+                log('❌ Firebase connection failed: ' + error.message);
+            }
+        }
+
+        async function createAdmin() {
+            try {
+                log('🔐 Creating admin user...');
+                
+                const userCredential = await auth.createUserWithEmailAndPassword(
+                    'teymccall@gmail.com', 
+                    'Admin123!@#'
+                );
+                
+                log('✅ User created: ' + userCredential.user.uid);
+                
+                // Create admin profile
+                await db.collection('users').doc(userCredential.user.uid).set({
+                    uid: userCredential.user.uid,
+                    email: 'teymccall@gmail.com',
+                    displayName: 'Super Admin',
+                    role: 'admin',
+                    status: 'active',
+                    createdAt: new Date(),
+                    updatedAt: new Date(),
+                    isVerified: true
+                });
+                
+                log('✅ Admin profile created in Firestore!');
+                log('🎉 Admin account ready! Email: teymccall@gmail.com, Password: Admin123!@#');
+                
+            } catch (error) {
+                if (error.code === 'auth/email-already-in-use') {
+                    log('ℹ️ User already exists: ' + error.message);
+                } else {
+                    log('❌ Error creating admin: ' + error.message);
+                }
+            }
+        }
+
+        async function testLogin() {
+            try {
+                log('🔐 Testing login...');
+                
+                const userCredential = await auth.signInWithEmailAndPassword(
+                    'teymccall@gmail.com', 
+                    'Admin123!@#'
+                );
+                
+                log('✅ Login successful! User ID: ' + userCredential.user.uid);
+                
+                // Get user profile
+                const userDoc = await db.collection('users').doc(userCredential.user.uid).get();
+                if (userDoc.exists) {
+                    const userData = userDoc.data();
+                    log('✅ User profile found: ' + userData.role + ' - ' + userData.status);
+                } else {
+                    log('⚠️ No user profile found in Firestore');
+                }
+                
+            } catch (error) {
+                log('❌ Login failed: ' + error.message);
+            }
+        }
+    </script>
+</body>
+</html>
+
+

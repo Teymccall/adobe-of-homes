@@ -55,8 +55,10 @@ class PropertyService {
         ...propertyData,
         createdAt: serverTimestamp(),
         updatedAt: serverTimestamp(),
-        verificationStatus: 'unverified',
-        isVerified: false
+        // Only set default values if not provided (allows admin to override)
+        verificationStatus: propertyData.verificationStatus || 'unverified',
+        isVerified: propertyData.isVerified ?? false,
+        isFeatured: propertyData.isFeatured ?? false
       };
 
       const docRef = await addDoc(collection(db, this.collectionName), property);
@@ -325,8 +327,9 @@ class PropertyService {
         return this.convertFirebaseProperty(doc.id, data);
       });
       
-      // Sort and limit in memory to avoid index requirement
+      // Filter featured, then sort and limit in memory to avoid index requirement
       return properties
+        .filter(p => (p as any).isFeatured)
         .sort((a, b) => b.createdAt.getTime() - a.createdAt.getTime())
         .slice(0, limitCount);
     } catch (error) {

@@ -27,6 +27,7 @@ import EstateManagement from "./pages/EstateManagement";
 import StaffLogin from "./pages/StaffLogin";
 import StaffDashboard from "./pages/StaffDashboard";
 import TestFirebase from "./pages/TestFirebase";
+import TestDataStorage from "./pages/TestDataStorage";
 
 const queryClient = new QueryClient({
   defaultOptions: {
@@ -63,6 +64,7 @@ const App = () => (
               <Route path="/apply-home-owner" element={<ApplyAgent />} />
               <Route path="/apply-artisan" element={<ApplyArtisan />} />
               <Route path="/test-firebase" element={<TestFirebase />} />
+              <Route path="/test-data-storage" element={<TestDataStorage />} />
 
               {/* Protected routes */}
               <Route 

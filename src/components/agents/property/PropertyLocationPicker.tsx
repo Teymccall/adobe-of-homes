@@ -13,7 +13,7 @@ const PropertyLocationPicker = ({ initialLocation, onLocationSelected }: Propert
   const { mapboxAccessToken } = useMaps();
 
   return (
-    <div>
+    <div id="map-location">
       <FormLabel>Map Location</FormLabel>
       <MapboxPicker 
         accessToken={mapboxAccessToken} 

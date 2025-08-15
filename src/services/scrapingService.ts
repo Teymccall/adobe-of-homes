@@ -238,8 +238,8 @@ class ScrapingService {
       // Upload to Cloudinary using existing service
       const formData = new FormData();
       formData.append('file', base64);
-      formData.append('upload_preset', 'ml_default');
-      formData.append('folder', 'scraped_properties');
+      formData.append('upload_preset', 'adobe_of_homes_upload');
+      formData.append('folder', 'properties');
       
       const uploadResponse = await fetch(
         'https://api.cloudinary.com/v1_1/dfrrgzgzu/upload',

@@ -5,6 +5,8 @@ import HeroSection from '@/components/home/HeroSection';
 import FeaturedProperties from '@/components/home/FeaturedProperties';
 import HowItWorks from '@/components/home/HowItWorks';
 import FeaturedArtisans from '@/components/home/FeaturedArtisans';
+import FeaturesSection from '@/components/home/FeaturesSection';
+import TestimonialsSection from '@/components/home/TestimonialsSection';
 import CtaSection from '@/components/home/CtaSection';
 import { useFeaturedProperties } from '@/hooks/useProperties';
 import { authService } from '@/services/authService';
@@ -45,6 +47,8 @@ const Index = () => {
       />
       <HowItWorks />
       <FeaturedArtisans artisans={featuredArtisans} isLoading={artisansLoading} />
+      <FeaturesSection />
+      <TestimonialsSection />
       <CtaSection />
     </Layout>
   );

@@ -17,6 +17,7 @@ const MapboxPicker = ({ accessToken, initialLocation, onLocationSelected }: Mapb
   const [currentLocation, setCurrentLocation] = useState<{ lat: number; lng: number } | null>(
     initialLocation || { lat: 5.6037, lng: -0.1870 } // Default to Accra, Ghana
   );
+  const [geoError, setGeoError] = useState<string | null>(null);
 
   useEffect(() => {
     if (!accessToken || !mapContainer.current) return;
@@ -34,6 +35,30 @@ const MapboxPicker = ({ accessToken, initialLocation, onLocationSelected }: Mapb
 
     // Add navigation controls
     map.current.addControl(new mapboxgl.NavigationControl(), 'top-right');
+
+    // Add built-in geolocate control as an additional reliable method
+    const geolocate = new mapboxgl.GeolocateControl({
+      positionOptions: { enableHighAccuracy: true },
+      trackUserLocation: false,
+      showUserHeading: true,
+    });
+    map.current.addControl(geolocate, 'top-right');
+    geolocate.on('geolocate', (e: any) => {
+      const newLocation = { lat: e.coords.latitude, lng: e.coords.longitude };
+      setCurrentLocation(newLocation);
+      setGeoError(null);
+      if (map.current) {
+        map.current.flyTo({ center: [newLocation.lng, newLocation.lat], zoom: 15 });
+      }
+      if (marker.current) {
+        marker.current.setLngLat([newLocation.lng, newLocation.lat]);
+      } else if (map.current) {
+        marker.current = new mapboxgl.Marker({ draggable: true })
+          .setLngLat([newLocation.lng, newLocation.lat])
+          .addTo(map.current);
+      }
+      onLocationSelected(newLocation);
+    });
 
     // Add marker if we have an initial location
     if (currentLocation) {
@@ -89,37 +114,49 @@ const MapboxPicker = ({ accessToken, initialLocation, onLocationSelected }: Mapb
 
   // Use current device location
   const useCurrentLocation = () => {
-    if (navigator.geolocation) {
-      navigator.geolocation.getCurrentPosition(
-        (position) => {
-          const newLocation = {
-            lat: position.coords.latitude,
-            lng: position.coords.longitude
-          };
-          setCurrentLocation(newLocation);
-          
-          if (map.current) {
-            map.current.flyTo({
-              center: [newLocation.lng, newLocation.lat],
-              zoom: 15
-            });
-          }
-          
-          if (marker.current) {
-            marker.current.setLngLat([newLocation.lng, newLocation.lat]);
-          } else {
-            marker.current = new mapboxgl.Marker({ draggable: true })
-              .setLngLat([newLocation.lng, newLocation.lat])
-              .addTo(map.current!);
-          }
-          
-          onLocationSelected(newLocation);
-        },
-        (error) => {
-          console.error('Error getting current location:', error);
-        }
-      );
+    setGeoError(null);
+    if (!('geolocation' in navigator)) {
+      setGeoError('Geolocation is not supported by this browser.');
+      return;
     }
+    // Note: requires HTTPS or localhost
+    if (!window.isSecureContext && window.location.hostname !== 'localhost') {
+      setGeoError('Location needs a secure (HTTPS) connection.');
+      return;
+    }
+    navigator.geolocation.getCurrentPosition(
+      (position) => {
+        const newLocation = {
+          lat: position.coords.latitude,
+          lng: position.coords.longitude
+        };
+        setCurrentLocation(newLocation);
+        setGeoError(null);
+        if (map.current) {
+          map.current.flyTo({ center: [newLocation.lng, newLocation.lat], zoom: 15 });
+        }
+        if (marker.current) {
+          marker.current.setLngLat([newLocation.lng, newLocation.lat]);
+        } else if (map.current) {
+          marker.current = new mapboxgl.Marker({ draggable: true })
+            .setLngLat([newLocation.lng, newLocation.lat])
+            .addTo(map.current);
+        }
+        onLocationSelected(newLocation);
+      },
+      (error) => {
+        console.error('Error getting current location:', error);
+        const message = error.code === error.PERMISSION_DENIED
+          ? 'Permission denied. Please allow location access in your browser.'
+          : error.code === error.POSITION_UNAVAILABLE
+          ? 'Location unavailable. Try again or move to an open area.'
+          : error.code === error.TIMEOUT
+          ? 'Timed out getting location. Please try again.'
+          : 'Failed to get your location.';
+        setGeoError(message);
+      },
+      { enableHighAccuracy: true, maximumAge: 10000, timeout: 10000 }
+    );
   };
 
   return (
@@ -150,6 +187,10 @@ const MapboxPicker = ({ accessToken, initialLocation, onLocationSelected }: Mapb
         />
       )}
       
+      {geoError && (
+        <div className="text-xs text-red-600">{geoError}</div>
+      )}
+
       {currentLocation && (
         <div className="text-xs text-muted-foreground">
           <p>Selected coordinates: {currentLocation.lat.toFixed(6)}, {currentLocation.lng.toFixed(6)}</p>

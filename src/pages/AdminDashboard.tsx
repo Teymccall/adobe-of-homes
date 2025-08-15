@@ -9,7 +9,8 @@ import {
   Shield, Hammer, Building2, ChevronDown, UserCog, BarChart3, Download
 } from 'lucide-react';
 import { Button } from '@/components/ui/button';
-import { Tabs, TabsContent, TabsList, TabsTrigger } from '@/components/ui/tabs';
+import { Badge } from '@/components/ui/badge';
+import { TabsContent } from '@/components/ui/tabs';
 import {
   DropdownMenu,
   DropdownMenuContent,
@@ -32,6 +33,9 @@ import EstateUserManagement from '@/components/admin/EstateUserManagement';
 import StaffManagement from '@/components/admin/StaffManagement';
 import ScrapingManagement from '@/components/admin/ScrapingManagement';
 import { adminService } from '@/services/adminService';
+import { notificationService } from '@/services/notificationService';
+import AdminFeaturedPropertyUploader from '@/components/admin/AdminFeaturedPropertyUploader';
+import AdminFeaturedPropertyList from '@/components/admin/AdminFeaturedPropertyList';
 
 const AdminDashboard = () => {
   const navigate = useNavigate();
@@ -43,6 +47,14 @@ const AdminDashboard = () => {
     totalProperties: 0,
     pendingReviews: 0,
     systemHealth: 98
+  });
+  const [notificationCounts, setNotificationCounts] = useState({
+    homeOwnerApplications: 0,
+    artisanApplications: 0,
+    propertyVerifications: 0,
+    maintenanceRequests: 0,
+    payments: 0,
+    reports: 0
   });
 
   useEffect(() => {
@@ -60,7 +72,23 @@ const AdminDashboard = () => {
       }
     };
 
+    const fetchNotificationCounts = async () => {
+      try {
+        await notificationService.fetchNotificationCounts();
+      } catch (error) {
+        console.error('Error fetching notification counts:', error);
+      }
+    };
+
     fetchQuickStats();
+    fetchNotificationCounts();
+
+    // Subscribe to notification updates
+    const unsubscribe = notificationService.subscribe((counts) => {
+      setNotificationCounts(counts);
+    });
+
+    return () => unsubscribe();
   }, []);
 
   // Check for tab parameter in URL
@@ -190,159 +218,302 @@ const AdminDashboard = () => {
           </div>
         </div>
         
-        <Tabs value={activeTab} onValueChange={setActiveTab} className="w-full">
-          <TabsList className="grid w-full grid-cols-6 mb-8 bg-white border border-gray-200 rounded-lg p-1 shadow-sm">
-            <TabsTrigger value="overview" className="flex items-center gap-2 data-[state=active]:bg-blue-50 data-[state=active]:text-blue-700 data-[state=active]:shadow-sm">
-              <LayoutDashboard size={16} />
-              <span className="hidden md:inline">Overview</span>
-              <span className="md:hidden">Overview</span>
-            </TabsTrigger>
-            <div className="flex items-center justify-center">
+        {/* Tab Navigation - Redesigned for better spacing and layout */}
+        <div className="bg-white rounded-lg shadow-sm border border-gray-200 p-4 mb-6">
+          <div className="flex flex-wrap gap-3 justify-start">
+            {/* Overview Tab */}
+            <button
+              onClick={() => setActiveTab('overview')}
+              className={`
+                flex items-center gap-2 px-4 py-2.5 rounded-full font-medium transition-all duration-200
+                ${activeTab === 'overview'
+                  ? 'bg-green-100 text-green-700 border-2 border-green-300 shadow-sm'
+                  : 'bg-gray-50 text-gray-600 border-2 border-gray-200 hover:bg-gray-100 hover:border-gray-300'
+                }
+                min-w-fit whitespace-nowrap
+              `}
+            >
+              <LayoutDashboard size={18} />
+              <span>Overview</span>
+            </button>
+
+            {/* Home Owners Dropdown */}
+            <div className="flex items-center">
               <DropdownMenu>
                 <DropdownMenuTrigger asChild>
                   <Button 
-                    variant={activeTab === 'applications' || activeTab === 'agents' ? 'default' : 'ghost'} 
-                    className="flex items-center gap-2 h-10"
+                    variant="ghost"
+                    className={`
+                      inline-flex justify-center items-center gap-2 px-4 py-2.5 rounded-full font-medium transition-all duration-200
+                      ${(activeTab === 'applications' || activeTab === 'agents') 
+                        ? 'bg-green-100 text-green-700 border-2 border-green-300 shadow-sm' 
+                        : 'bg-gray-50 text-gray-600 border-2 border-gray-200 hover:bg-gray-100 hover:border-gray-300'
+                      }
+                      min-w-fit whitespace-nowrap
+                    `}
                   >
-                    <Users size={16} />
-                    <span className="hidden md:inline">Home Owners</span>
-                    <span className="md:hidden">Home Owners</span>
-                    <ChevronDown size={14} />
+                    <Users size={18} />
+                    <span>Home Owners</span>
+                    <ChevronDown size={16} />
                   </Button>
                 </DropdownMenuTrigger>
-                <DropdownMenuContent align="start" className="w-48">
+                <DropdownMenuContent align="start" className="w-56">
                   <DropdownMenuItem 
                     onClick={() => setActiveTab('applications')}
                     className="flex items-center gap-2"
                   >
-                    <UserCheck size={16} />
+                    <UserCheck size={18} />
                     Applications
+                    {notificationCounts.homeOwnerApplications > 0 && (
+                      <Badge variant="destructive" className="ml-auto rounded-full text-white">{notificationCounts.homeOwnerApplications}</Badge>
+                    )}
                   </DropdownMenuItem>
                   <DropdownMenuItem 
                     onClick={() => setActiveTab('agents')}
                     className="flex items-center gap-2"
                   >
-                    <Users size={16} />
+                    <Users size={18} />
                     Manage
+                    {quickStats.totalUsers > 0 && (
+                      <Badge variant="secondary" className="ml-auto rounded-full">{quickStats.totalUsers}</Badge>
+                    )}
                   </DropdownMenuItem>
                 </DropdownMenuContent>
               </DropdownMenu>
             </div>
-            
-            <TabsTrigger value="artisans" className="flex items-center gap-2">
-              <Hammer size={16} />
-              <span className="hidden md:inline">Artisan Applications</span>
-              <span className="md:hidden">Artisans</span>
-            </TabsTrigger>
-            
-            <div className="flex items-center justify-center">
+
+            {/* Artisan Applications Tab */}
+            <button
+              onClick={() => setActiveTab('artisans')}
+              className={`
+                flex items-center gap-2 px-4 py-2.5 rounded-full font-medium transition-all duration-200
+                ${activeTab === 'artisans'
+                  ? 'bg-green-100 text-green-700 border-2 border-green-300 shadow-sm'
+                  : 'bg-gray-50 text-gray-600 border-2 border-gray-200 hover:bg-gray-100 hover:border-gray-300'
+                }
+                min-w-fit whitespace-nowrap
+              `}
+            >
+              <Hammer size={18} />
+              <span>Artisan Applications</span>
+              {notificationCounts.artisanApplications > 0 && (
+                <Badge variant="destructive" className="ml-1 rounded-full text-white">{notificationCounts.artisanApplications}</Badge>
+              )}
+            </button>
+
+            {/* User Management Dropdown */}
+            <div className="flex items-center">
               <DropdownMenu>
                 <DropdownMenuTrigger asChild>
                   <Button 
-                    variant={activeTab === 'users' || activeTab === 'estate-users' || activeTab === 'staffs' ? 'default' : 'ghost'} 
-                    className="flex items-center gap-2 h-10"
+                    variant="ghost"
+                    className={`
+                      inline-flex justify-center items-center gap-2 px-4 py-2.5 rounded-full font-medium transition-all duration-200
+                      ${(activeTab === 'users' || activeTab === 'estate-users' || activeTab === 'staffs') 
+                        ? 'bg-green-100 text-green-700 border-2 border-green-300 shadow-sm' 
+                        : 'bg-gray-50 text-gray-600 border-2 border-gray-200 hover:bg-gray-100 hover:border-gray-300'
+                      }
+                      min-w-fit whitespace-nowrap
+                    `}
                   >
-                    <UserCog size={16} />
-                    <span className="hidden md:inline">User Management</span>
-                    <span className="md:hidden">Users</span>
-                    <ChevronDown size={14} />
+                    <UserCog size={18} />
+                    <span>User Management</span>
+                    <ChevronDown size={16} />
                   </Button>
                 </DropdownMenuTrigger>
-                <DropdownMenuContent align="start" className="w-48">
+                <DropdownMenuContent align="start" className="w-56">
                   <DropdownMenuItem 
                     onClick={() => setActiveTab('users')}
                     className="flex items-center gap-2"
                   >
-                    <Users size={16} />
+                    <Users size={18} />
                     All Users
+                    {quickStats.totalUsers > 0 && (
+                      <Badge variant="secondary" className="ml-auto rounded-full">{quickStats.totalUsers}</Badge>
+                    )}
                   </DropdownMenuItem>
                   <DropdownMenuItem 
                     onClick={() => setActiveTab('estate-users')}
                     className="flex items-center gap-2"
                   >
-                    <Building2 size={16} />
+                    <Building2 size={18} />
                     Estate Users
                   </DropdownMenuItem>
                   <DropdownMenuItem 
                     onClick={() => setActiveTab('staffs')}
                     className="flex items-center gap-2"
                   >
-                    <UserCog size={16} />
+                    <UserCog size={18} />
                     Staff Members
                   </DropdownMenuItem>
                 </DropdownMenuContent>
               </DropdownMenu>
             </div>
-            
-            <TabsTrigger value="verifications" className="flex items-center gap-2">
-              <Shield size={16} />
-              <span className="hidden md:inline">Verification Requests</span>
-              <span className="md:hidden">Verifications</span>
-            </TabsTrigger>
-            <TabsTrigger value="scraping" className="flex items-center gap-2">
-              <Download size={16} />
-              <span className="hidden md:inline">Property Scraping</span>
-              <span className="md:hidden">Scraping</span>
-            </TabsTrigger>
-            <TabsTrigger value="reports" className="flex items-center gap-2">
-              <FileText size={16} />
-              <span className="hidden md:inline">System Reports</span>
-              <span className="md:hidden">Reports</span>
-            </TabsTrigger>
-          </TabsList>
+
+            {/* Verification Requests Tab */}
+            <button
+              onClick={() => setActiveTab('verifications')}
+              className={`
+                flex items-center gap-2 px-4 py-2.5 rounded-full font-medium transition-all duration-200
+                ${activeTab === 'verifications'
+                  ? 'bg-green-100 text-green-700 border-2 border-green-300 shadow-sm'
+                  : 'bg-gray-50 text-gray-600 border-2 border-gray-200 hover:bg-gray-100 hover:border-gray-300'
+                }
+                min-w-fit whitespace-nowrap
+              `}
+            >
+              <Shield size={18} />
+              <span>Verification Requests</span>
+              {notificationCounts.propertyVerifications > 0 && (
+                <Badge variant="destructive" className="ml-1 rounded-full text-white">{notificationCounts.propertyVerifications}</Badge>
+              )}
+            </button>
+
+            {/* Property Scraping Tab */}
+            <button
+              onClick={() => setActiveTab('scraping')}
+              className={`
+                flex items-center gap-2 px-4 py-2.5 rounded-full font-medium transition-all duration-200
+                ${activeTab === 'scraping'
+                  ? 'bg-green-100 text-green-700 border-2 border-green-300 shadow-sm'
+                  : 'bg-gray-50 text-gray-600 border-2 border-gray-200 hover:bg-gray-100 hover:border-gray-300'
+                }
+                min-w-fit whitespace-nowrap
+              `}
+            >
+              <Download size={18} />
+              <span>Property Scraping</span>
+            </button>
+
+            {/* System Reports Tab */}
+            <button
+              onClick={() => setActiveTab('reports')}
+              className={`
+                flex items-center gap-2 px-4 py-2.5 rounded-full font-medium transition-all duration-200
+                ${activeTab === 'reports'
+                  ? 'bg-green-100 text-green-700 border-2 border-green-300 shadow-sm'
+                  : 'bg-gray-50 text-gray-600 border-2 border-gray-200 hover:bg-gray-100 hover:border-gray-300'
+                }
+                min-w-fit whitespace-nowrap
+              `}
+            >
+              <FileText size={18} />
+              <span>System Reports</span>
+            </button>
+          </div>
+        </div>
+
+        {/* Content Sections */}
+        <div className="w-full">
+          {/* New: Featured Properties management for Admins */}
+          {activeTab === 'overview' && (
+            <div className="mb-6 flex flex-wrap gap-3">
+              <Button
+                onClick={() => setActiveTab('add-featured')}
+                className="bg-primary text-white hover:bg-primary/90"
+              >
+                Add Featured Property
+              </Button>
+              <Button
+                variant="outline"
+                onClick={() => setActiveTab('manage-featured')}
+              >
+                Manage Featured
+              </Button>
+            </div>
+          )}
+          {activeTab === 'overview' && (
+            <div className="bg-white p-6 rounded-xl shadow-sm border border-gray-100">
+              <AdminOverview />
+            </div>
+          )}
           
-          <TabsContent value="overview" className="bg-white p-6 rounded-xl shadow-sm border border-gray-100">
-            <AdminOverview />
-          </TabsContent>
+          {activeTab === 'applications' && (
+            <div className="bg-white p-6 rounded-xl shadow-sm border border-gray-100">
+              <AgentApplicationsList />
+            </div>
+          )}
           
-          <TabsContent value="applications" className="bg-white p-6 rounded-xl shadow-sm border border-gray-100">
-            <AgentApplicationsList />
-          </TabsContent>
+          {activeTab === 'agents' && (
+            <div className="bg-white p-6 rounded-xl shadow-sm border border-gray-100">
+              <h2 className="text-xl font-semibold mb-4">Manage Verified Home Owners</h2>
+              <AgentManagement />
+            </div>
+          )}
           
-          <TabsContent value="agents" className="bg-white p-6 rounded-xl shadow-sm border border-gray-100">
-            <h2 className="text-xl font-semibold mb-4">Manage Verified Home Owners</h2>
-            <AgentManagement />
-          </TabsContent>
+          {activeTab === 'artisans' && (
+            <div className="bg-white p-6 rounded-xl shadow-sm border border-gray-100">
+              <ArtisanApplicationsList />
+            </div>
+          )}
           
-          <TabsContent value="artisans" className="bg-white p-6 rounded-xl shadow-sm border border-gray-100">
-            <ArtisanApplicationsList />
-          </TabsContent>
+          {activeTab === 'users' && (
+            <div className="bg-white p-6 rounded-xl shadow-sm border border-gray-100">
+              <UserManagement />
+            </div>
+          )}
           
-          <TabsContent value="users" className="bg-white p-6 rounded-xl shadow-sm border border-gray-100">
-            <UserManagement />
-          </TabsContent>
+          {activeTab === 'estate-users' && (
+            <div className="bg-white p-6 rounded-xl shadow-sm border border-gray-100">
+              <h2 className="text-xl font-semibold mb-4">Estate Management Users</h2>
+              <EstateUserManagement />
+            </div>
+          )}
           
-          <TabsContent value="estate-users" className="bg-white p-6 rounded-xl shadow-sm border border-gray-100">
-            <h2 className="text-xl font-semibold mb-4">Estate Management Users</h2>
-            <EstateUserManagement />
-          </TabsContent>
+          {activeTab === 'staffs' && (
+            <div className="bg-white p-6 rounded-xl shadow-sm border border-gray-100">
+              <h2 className="text-xl font-semibold mb-4">System Staff Management</h2>
+              <StaffManagement />
+            </div>
+          )}
           
-          <TabsContent value="staffs" className="bg-white p-6 rounded-xl shadow-sm border border-gray-100">
-            <h2 className="text-xl font-semibold mb-4">System Staff Management</h2>
-            <StaffManagement />
-          </TabsContent>
+          {activeTab === 'verifications' && (
+            <div className="bg-white p-6 rounded-xl shadow-sm border border-gray-100">
+              <PropertyVerificationManagement />
+            </div>
+          )}
           
-          <TabsContent value="verifications" className="bg-white p-6 rounded-xl shadow-sm border border-gray-100">
-            <PropertyVerificationManagement />
-          </TabsContent>
+          {activeTab === 'scraping' && (
+            <div className="bg-white p-6 rounded-xl shadow-sm border border-gray-100">
+              <ScrapingManagement />
+            </div>
+          )}
           
-          <TabsContent value="scraping" className="bg-white p-6 rounded-xl shadow-sm border border-gray-100">
-            <ScrapingManagement />
-          </TabsContent>
-          
-          <TabsContent value="reports" className="bg-white p-6 rounded-xl shadow-sm border border-gray-100">
-            <AnalyticsDashboard />
-          </TabsContent>
+          {activeTab === 'reports' && (
+            <div className="bg-white p-6 rounded-xl shadow-sm border border-gray-100">
+              <AnalyticsDashboard />
+            </div>
+          )}
+
+          {activeTab === 'add-featured' && (
+            <div className="bg-white p-6 rounded-xl shadow-sm border border-gray-100">
+              <h2 className="text-xl font-semibold mb-4">Add Featured Property</h2>
+              <p className="text-sm text-gray-600 mb-6">Upload a property and mark it as featured. Featured properties appear on the homepage.</p>
+              {/* Reuse agent upload form but admins will own the property; we toggle featured flag after create */}
+              <AdminFeaturedPropertyUploader />
+            </div>
+          )}
+
+          {activeTab === 'manage-featured' && (
+            <div className="bg-white p-6 rounded-xl shadow-sm border border-gray-100">
+              <h2 className="text-xl font-semibold mb-4">Manage Featured Properties</h2>
+              <AdminFeaturedPropertyList />
+            </div>
+          )}
           
           {/* Profile and Settings tabs - accessible via URL parameters */}
-          <TabsContent value="profile" className="bg-white p-6 rounded-xl shadow-sm border border-gray-100">
-            <AdminProfile />
-          </TabsContent>
+          {activeTab === 'profile' && (
+            <div className="bg-white p-6 rounded-xl shadow-sm border border-gray-100">
+              <AdminProfile />
+            </div>
+          )}
           
-          <TabsContent value="settings" className="bg-white p-6 rounded-xl shadow-sm border border-gray-100">
-            <AdminSettings />
-          </TabsContent>
-        </Tabs>
+          {activeTab === 'settings' && (
+            <div className="bg-white p-6 rounded-xl shadow-sm border border-gray-100">
+              <AdminSettings />
+            </div>
+          )}
+        </div>
       </div>
     </div>
   );

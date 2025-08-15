@@ -1,20 +1,23 @@
 
 import React, { useState, useEffect } from 'react';
-import { Link } from 'react-router-dom';
+import { Link, useSearchParams } from 'react-router-dom';
 import Layout from '@/components/layout/Layout';
 import PropertyCard from '@/components/properties/PropertyCard';
+import MapSearchView from '@/components/maps/MapSearchView';
 import PropertyFilters from '@/components/properties/PropertyFilters';
 import { SearchFilters } from '@/data/types';
 import { propertyService } from '@/services/propertyService';
 import { authService } from '@/services/authService';
 
 const Search = () => {
+  const [searchParams, setSearchParams] = useSearchParams();
   const [filters, setFilters] = useState<SearchFilters>({
-    location: '',
-    propertyType: 'all',
-    priceRange: 'all',
-    bedrooms: 'all',
-    stayDuration: 'all',
+    location: searchParams.get('location') || '',
+    propertyType: searchParams.get('propertyType') || 'all',
+    priceRange: searchParams.get('priceRange') || 'all',
+    bedrooms: searchParams.get('bedrooms') || 'all',
+    stayDuration: searchParams.get('stayDuration') || 'all',
+    showMap: searchParams.get('showMap') === 'true',
   });
   
   const [properties, setProperties] = useState<any[]>([]);
@@ -47,6 +50,19 @@ const Search = () => {
   const getHomeOwnerById = (homeOwnerId: string) => {
     return homeOwners.find(owner => owner.uid === homeOwnerId);
   };
+
+  // Update URL when filters change
+  useEffect(() => {
+    const params = new URLSearchParams();
+    if (filters.location) params.set('location', filters.location);
+    if (filters.propertyType !== 'all') params.set('propertyType', filters.propertyType);
+    if (filters.priceRange !== 'all') params.set('priceRange', filters.priceRange);
+    if (filters.bedrooms !== 'all') params.set('bedrooms', filters.bedrooms);
+    if (filters.stayDuration !== 'all') params.set('stayDuration', filters.stayDuration);
+    if (filters.showMap) params.set('showMap', 'true');
+    
+    setSearchParams(params);
+  }, [filters, setSearchParams]);
 
   // Filter properties based on user filters
   const filteredProperties = properties.filter((property) => {
@@ -115,7 +131,26 @@ const Search = () => {
         <h1 className="text-2xl md:text-3xl font-bold mb-2">Find Your Perfect Property</h1>
         <p className="text-muted-foreground mb-6">Browse properties for sale and rent in Ghana</p>
         
-        {/* Filters at the top */}
+        {/* Search bar */}
+        <div className="mb-6">
+          <div className="max-w-md relative">
+            <input
+              type="text"
+              placeholder="Search by location (e.g., East Legon, Accra)"
+              className="w-full pl-4 pr-20 py-3 border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-ghana-primary focus:border-transparent"
+              value={filters.location}
+              onChange={(e) => setFilters(prev => ({ ...prev, location: e.target.value }))}
+            />
+            <button
+              onClick={() => setFilters(prev => ({ ...prev, location: filters.location }))}
+              className="absolute right-1 top-1 bg-ghana-primary text-white px-4 py-2 rounded-md hover:bg-ghana-primary/90 transition-colors"
+            >
+              Search
+            </button>
+          </div>
+        </div>
+        
+        {/* Filters */}
         <div className="mb-8">
           <PropertyFilters 
             filters={filters} 
@@ -123,8 +158,26 @@ const Search = () => {
           />
         </div>
         
-        {/* Property listings */}
-        <div className="w-full">
+        {/* Map + Property listings */}
+        <div className="w-full space-y-6">
+          {/* Map toggle and view */}
+          <div className="flex items-center justify-between mb-4">
+            <h3 className="text-lg font-semibold">Property Locations</h3>
+            <button
+              onClick={() => setFilters(prev => ({ ...prev, showMap: !prev.showMap }))}
+              className="flex items-center gap-2 px-4 py-2 bg-ghana-primary text-white rounded-lg hover:bg-ghana-primary/90 transition-colors"
+            >
+              {filters.showMap ? 'Hide Map' : 'Show Map'}
+            </button>
+          </div>
+          
+          {filters.showMap && (
+            <MapSearchView 
+              properties={filteredProperties as any}
+              onBoundsChange={() => { /* hook for future "search this area" */ }}
+            />
+          )}
+
           {filteredProperties.length > 0 ? (
             <div>
               <p className="mb-4 text-muted-foreground">Showing {filteredProperties.length} properties</p>
@@ -172,6 +225,7 @@ const Search = () => {
                   priceRange: 'all',
                   bedrooms: 'all',
                   stayDuration: 'all',
+                  showMap: false,
                 })}
                 className="text-ghana-primary hover:underline"
               >

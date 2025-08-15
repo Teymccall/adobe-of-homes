@@ -6,13 +6,12 @@ import { getStorage } from "firebase/storage";
 import { getDatabase } from "firebase/database";
 
 // Your web app's Firebase configuration
-const firebaseConfig = {
+export const firebaseConfig = {
   apiKey: "AIzaSyB69I8jFRazBAgt7ktXl3KiBz_IAeFWqAw",
-  authDomain: "adobe-of-homes.firebaseapp.com",
-  databaseURL: "https://adobe-of-homes-default-rtdb.firebaseio.com",
-  projectId: "adobe-of-homes",
-  // Firebase Storage bucket should use the appspot.com domain
-  storageBucket: "adobe-of-homes.appspot.com",
+  authDomain: "adobe-of-homes-81920.firebaseapp.com",
+  databaseURL: "https://adobe-of-homes-81920-default-rtdb.firebaseio.com",
+  projectId: "adobe-of-homes-81920",
+  storageBucket: "adobe-of-homes-81920.firebasestorage.app",
   messagingSenderId: "787532865176",
   appId: "1:787532865176:web:03fb16c1b84894a59efaed"
 };
